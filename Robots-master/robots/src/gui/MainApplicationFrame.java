@@ -12,7 +12,7 @@ import log.Logger;
 
 public class MainApplicationFrame extends JFrame
 {
-    private final JDesktopPane desktopPane = new JDesktopPane();//TODO: observe/observable
+    private final JDesktopPane desktopPane = new JDesktopPane();
 
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
@@ -50,7 +50,9 @@ public class MainApplicationFrame extends JFrame
                     case "game":
                         addWindow(createGameWindow(converted[0],converted[1],converted[2],converted[3]));
                         break;
-                        //TODO: pos serialisation
+                    default:
+                        break;
+                    //TODO: pos serialisation
 
 
                 }
@@ -109,8 +111,7 @@ public class MainApplicationFrame extends JFrame
         gameWindow.setName("game");
         gameWindow.setLocation(x, y);
         gameWindow.setSize(width, height);
-        //create paired PosWindow
-        addWindow(createPosWindow());
+        addWindow(createPosWindow(gameWindow)); //create paired PosWindow
         return gameWindow;
     }
 
@@ -118,16 +119,16 @@ public class MainApplicationFrame extends JFrame
         return createGameWindow(0, 0, 400, 400);
     }
 
-    private PosWindow createPosWindow(GameVisualizer visualizer, int x, int y, int width, int height) {
-        PosWindow posWindow = new PosWindow(visualizer);
+    private PosWindow createPosWindow(GameWindow gw, int x, int y, int width, int height) {
+        PosWindow posWindow = new PosWindow(gw.getRobotMovement());
         posWindow.setName("pos");
         posWindow.setLocation(x, y);
         posWindow.setSize(width, height);
         return posWindow;
     }
 
-    private PosWindow createPosWindow(GameVisualizer visualizer) { //default params
-        return createPosWindow(visualizer, 0, 0, 200, 100);
+    private PosWindow createPosWindow(GameWindow gw) { //default params
+        return createPosWindow(gw, 0, 0, 200, 100);
     }
 
     private void createDefaultPair() {

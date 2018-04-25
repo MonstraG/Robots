@@ -1,11 +1,12 @@
 package gui;
 
+import java.util.Observable;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RobotMovement {
+public class RobotMovement extends Observable {
 
-    private final Timer m_timer = initTimer();
+    private int tickCount;
 
     private static Timer initTimer() {
         Timer timer = new Timer("events generator", true);
@@ -13,12 +14,7 @@ public class RobotMovement {
     }
 
     public RobotMovement() {
-        m_timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                onModelUpdateEvent();
-            }
-        }, 0, 15);
+        tickCount = 0;
     }
 
     public double[] getRobotData() { //X,Y,Angle,TargX,TargY
@@ -77,8 +73,14 @@ public class RobotMovement {
         {
             angularVelocity = -maxAngularVelocity;
         }
-
         moveRobot(velocity, angularVelocity, 10);
+
+        tickCount++;
+        if (tickCount % 10 == 0) {
+            notifyObservers();
+            setChanged();
+        }
+        notifyObservers(123);
     }
 
     private static double applyLimits(double value, double min, double max)
@@ -122,6 +124,7 @@ public class RobotMovement {
             angle -= 2*Math.PI;
         return angle;
     }
+
 
 
 }

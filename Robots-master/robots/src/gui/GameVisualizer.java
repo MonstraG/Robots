@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 
 public class GameVisualizer extends JPanel
 {
-    //TODO: new class for robot movement
 
     private final Timer m_timer = initTimer();
 
@@ -35,12 +34,8 @@ public class GameVisualizer extends JPanel
 
     public GameVisualizer(RobotMovement robotMovement)
     {
-        robX = robotMovement.getRobotData()[0];
-        robY = robotMovement.getRobotData()[1];
-        robAngle = robotMovement.getRobotData()[2];
-        robTargetX = (int)robotMovement.getRobotData()[3];
-        robTargetY = (int)robotMovement.getRobotData()[4];
         rm = robotMovement;
+        updateRobData();
 
         m_timer.schedule(new TimerTask()
         {
@@ -49,7 +44,14 @@ public class GameVisualizer extends JPanel
             {
                 onRedrawEvent();
             }
-        }, 0, 50);
+        }, 0, 10);
+
+        m_timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                rm.onModelUpdateEvent();
+            }
+        },0, 10);
 
         addMouseListener(new MouseAdapter()
         {
@@ -63,6 +65,13 @@ public class GameVisualizer extends JPanel
         setDoubleBuffered(true);
     }
 
+    private void updateRobData() {
+        robX = rm.getRobotData()[0];
+        robY = rm.getRobotData()[1];
+        robAngle = rm.getRobotData()[2];
+        robTargetX = (int)rm.getRobotData()[3];
+        robTargetY = (int)rm.getRobotData()[4];
+    }
 
     protected void setTargetPosition(Point p)
     {
@@ -84,6 +93,7 @@ public class GameVisualizer extends JPanel
     public void paint(Graphics g)
     {
         super.paint(g);
+        updateRobData();
         Graphics2D g2d = (Graphics2D)g; 
         drawRobot(g2d, round(robX), round(robY), robAngle);
         drawTarget(g2d, robTargetX, robTargetY);
@@ -101,8 +111,8 @@ public class GameVisualizer extends JPanel
     
     private void drawRobot(Graphics2D g, int x, int y, double direction)
     {
-        int robotCenterX = round(robX);
-        int robotCenterY = round(robY);
+        int robotCenterX = x;
+        int robotCenterY = y;
         AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY); 
         g.setTransform(t);
         g.setColor(Color.MAGENTA);
