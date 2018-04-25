@@ -11,7 +11,7 @@ public class GameWindow extends JInternalFrame
     public GameWindow() 
     {
         super("Игровое поле", true, true, true, true);
-        m_visualizer = new GameVisualizer();
+        m_visualizer = new GameVisualizer(new RobotMovement());
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_visualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
@@ -19,8 +19,8 @@ public class GameWindow extends JInternalFrame
     }
 
     public double[] GetRobotPos() {
-        return new double[] {m_visualizer.m_robotPositionX,
-                             m_visualizer.m_robotPositionY,
-                             m_visualizer.m_robotDirection};
+        return new double[] {m_visualizer.robX,
+                             m_visualizer.robY,
+                             m_visualizer.robAngle};
     }
 }

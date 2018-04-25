@@ -1,10 +1,35 @@
 package gui;
 
-import java.awt.*;
-import java.util.Observable;
+import java.util.Timer;
+import java.util.TimerTask;
 
-public class RobotMovement extends Observable {
+public class RobotMovement {
 
+    private final Timer m_timer = initTimer();
+
+    private static Timer initTimer() {
+        Timer timer = new Timer("events generator", true);
+        return timer;
+    }
+
+    public RobotMovement() {
+        m_timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                onModelUpdateEvent();
+            }
+        }, 0, 15);
+    }
+
+    public double[] getRobotData() { //X,Y,Angle,TargX,TargY
+        return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
+                            m_targetPositionX, m_targetPositionY};
+    }
+
+    public void setTarget(int x, int y) {
+        m_targetPositionX = x;
+        m_targetPositionY = y;
+    }
 
     volatile double m_robotPositionX = 100;
     volatile double m_robotPositionY = 100;
@@ -92,13 +117,9 @@ public class RobotMovement extends Observable {
     private static double asNormalizedRadians(double angle)
     {
         while (angle < 0)
-        {
             angle += 2*Math.PI;
-        }
         while (angle >= 2*Math.PI)
-        {
             angle -= 2*Math.PI;
-        }
         return angle;
     }
 

@@ -12,7 +12,7 @@ import log.Logger;
 
 public class MainApplicationFrame extends JFrame
 {
-    private final JDesktopPane desktopPane = new JDesktopPane();
+    private final JDesktopPane desktopPane = new JDesktopPane();//TODO: observe/observable
 
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
@@ -110,7 +110,7 @@ public class MainApplicationFrame extends JFrame
         gameWindow.setLocation(x, y);
         gameWindow.setSize(width, height);
         //create paired PosWindow
-        addWindow(createPosWindow(gameWindow));
+        addWindow(createPosWindow());
         return gameWindow;
     }
 
@@ -118,16 +118,16 @@ public class MainApplicationFrame extends JFrame
         return createGameWindow(0, 0, 400, 400);
     }
 
-    private PosWindow createPosWindow(GameWindow gw, int x, int y, int width, int height) {
-        PosWindow posWindow = new PosWindow(gw);
+    private PosWindow createPosWindow(GameVisualizer visualizer, int x, int y, int width, int height) {
+        PosWindow posWindow = new PosWindow(visualizer);
         posWindow.setName("pos");
         posWindow.setLocation(x, y);
         posWindow.setSize(width, height);
         return posWindow;
     }
 
-    private PosWindow createPosWindow(GameWindow gw) { //default params
-        return createPosWindow(gw, 0, 0, 200, 100);
+    private PosWindow createPosWindow(GameVisualizer visualizer) { //default params
+        return createPosWindow(visualizer, 0, 0, 200, 100);
     }
 
     private void createDefaultPair() {
