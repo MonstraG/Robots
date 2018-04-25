@@ -18,4 +18,9 @@ public class GameWindow extends JInternalFrame
         pack();
     }
 
+    public double[] GetRobotPos() {
+        return new double[] {m_visualizer.m_robotPositionX,
+                             m_visualizer.m_robotPositionY,
+                             m_visualizer.m_robotDirection};
+    }
 }

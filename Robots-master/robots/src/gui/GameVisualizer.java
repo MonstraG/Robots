@@ -15,6 +15,8 @@ import javax.swing.JPanel;
 
 public class GameVisualizer extends JPanel
 {
+    //TODO: new class for robot movement
+
     private final Timer m_timer = initTimer();
     
     private static Timer initTimer() 
@@ -22,17 +24,17 @@ public class GameVisualizer extends JPanel
         Timer timer = new Timer("events generator", true);
         return timer;
     }
-    
-    private volatile double m_robotPositionX = 100;
-    private volatile double m_robotPositionY = 100; 
-    private volatile double m_robotDirection = 0; 
+
+    volatile double m_robotPositionX = 100;
+    volatile double m_robotPositionY = 100;
+    volatile double m_robotDirection = 0;
 
     private volatile int m_targetPositionX = 150;
     private volatile int m_targetPositionY = 100;
-    
-    private static final double maxVelocity = 0.1; 
-    private static final double maxAngularVelocity = 0.001; 
-    
+
+    private static final double maxVelocity = 0.1;
+    private static final double maxAngularVelocity = 0.001;
+
     public GameVisualizer() 
     {
         m_timer.schedule(new TimerTask()
@@ -68,7 +70,7 @@ public class GameVisualizer extends JPanel
         m_targetPositionX = p.x;
         m_targetPositionY = p.y;
     }
-    
+
     protected void onRedrawEvent()
     {
         EventQueue.invokeLater(this::repaint);
@@ -80,18 +82,18 @@ public class GameVisualizer extends JPanel
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
     }
-    
+
     private static double angleTo(double fromX, double fromY, double toX, double toY)
     {
         double diffX = toX - fromX;
         double diffY = toY - fromY;
-        
+
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
-    
+
     protected void onModelUpdateEvent()
     {
-        double distance = distance(m_targetPositionX, m_targetPositionY, 
+        double distance = distance(m_targetPositionX, m_targetPositionY,
             m_robotPositionX, m_robotPositionY);
         if (distance < 0.5)
         {
@@ -108,10 +110,10 @@ public class GameVisualizer extends JPanel
         {
             angularVelocity = -maxAngularVelocity;
         }
-        
+
         moveRobot(velocity, angularVelocity, 10);
     }
-    
+
     private static double applyLimits(double value, double min, double max)
     {
         if (value < min)
@@ -120,19 +122,19 @@ public class GameVisualizer extends JPanel
             return max;
         return value;
     }
-    
+
     private void moveRobot(double velocity, double angularVelocity, double duration)
     {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
-        double newX = m_robotPositionX + velocity / angularVelocity * 
+        double newX = m_robotPositionX + velocity / angularVelocity *
             (Math.sin(m_robotDirection  + angularVelocity * duration) -
                 Math.sin(m_robotDirection));
         if (!Double.isFinite(newX))
         {
             newX = m_robotPositionX + velocity * duration * Math.cos(m_robotDirection);
         }
-        double newY = m_robotPositionY - velocity / angularVelocity * 
+        double newY = m_robotPositionY - velocity / angularVelocity *
             (Math.cos(m_robotDirection  + angularVelocity * duration) -
                 Math.cos(m_robotDirection));
         if (!Double.isFinite(newY))
@@ -141,7 +143,7 @@ public class GameVisualizer extends JPanel
         }
         m_robotPositionX = newX;
         m_robotPositionY = newY;
-        double newDirection = asNormalizedRadians(m_robotDirection + angularVelocity * duration); 
+        double newDirection = asNormalizedRadians(m_robotDirection + angularVelocity * duration);
         m_robotDirection = newDirection;
     }
 
@@ -157,7 +159,7 @@ public class GameVisualizer extends JPanel
         }
         return angle;
     }
-    
+
     private static int round(double value)
     {
         return (int)(value + 0.5);

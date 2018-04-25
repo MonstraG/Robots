@@ -13,11 +13,11 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    
+
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
-        int inset = 50;        
+        int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset, screenSize.width  - inset*2, screenSize.height - inset*2);
         setContentPane(desktopPane);
@@ -25,7 +25,7 @@ public class MainApplicationFrame extends JFrame
         read();
 
         setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -43,13 +43,16 @@ public class MainApplicationFrame extends JFrame
                 int converted[] = new int[4];
                 for (int i = 0; i < 4; i++)
                     converted[i] = Integer.parseInt(parts[i]);
-                switch (parts[5]) {
+                switch (parts[4]) {
                     case "log":
-                        addWindow(createLogWindow(converted[1],converted[2],converted[3],converted[4]));
+                        addWindow(createLogWindow(converted[0],converted[1],converted[2],converted[3]));
                         break;
                     case "game":
-                        addWindow(createGameWindow(converted[1],converted[2],converted[3],converted[4]));
+                        addWindow(createGameWindow(converted[0],converted[1],converted[2],converted[3]));
                         break;
+                        //TODO: pos serialisation
+
+
                 }
             }
         } catch (Exception e) {
@@ -93,26 +96,38 @@ public class MainApplicationFrame extends JFrame
         logWindow.setLocation(x,y);
         logWindow.setSize(width, height);
         setMinimumSize(logWindow.getSize());
-        logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
 
-    private LogWindow createLogWindow()
-    {
+    private LogWindow createLogWindow() { //default params
         return createLogWindow(10,10 ,300, 800);
     }
 
     private GameWindow createGameWindow(int x, int y, int width, int height) {
         GameWindow gameWindow = new GameWindow();
         gameWindow.setName("game");
-        gameWindow.setLocation(x,y);
+        gameWindow.setLocation(x, y);
         gameWindow.setSize(width, height);
+        //create paired PosWindow
+        addWindow(createPosWindow(gameWindow));
         return gameWindow;
     }
 
-    private GameWindow createGameWindow() {
+    private GameWindow createGameWindow() { //default params
         return createGameWindow(0, 0, 400, 400);
+    }
+
+    private PosWindow createPosWindow(GameWindow gw, int x, int y, int width, int height) {
+        PosWindow posWindow = new PosWindow(gw);
+        posWindow.setName("pos");
+        posWindow.setLocation(x, y);
+        posWindow.setSize(width, height);
+        return posWindow;
+    }
+
+    private PosWindow createPosWindow(GameWindow gw) { //default params
+        return createPosWindow(gw, 0, 0, 200, 100);
     }
 
     private void createDefaultPair() {
@@ -120,7 +135,7 @@ public class MainApplicationFrame extends JFrame
         addWindow(createGameWindow());
     }
 
-    
+
     private void addWindow(JInternalFrame frame)
     {
         desktopPane.add(frame);
@@ -135,17 +150,19 @@ public class MainApplicationFrame extends JFrame
         JMenu fileMenu = new JMenu("Файл");
         fileMenu.setMnemonic(KeyEvent.VK_F);
         fileMenu.getAccessibleContext().setAccessibleDescription("Управление приложением");
-        generateMenuItem(fileMenu,"Новая пара окон", (event) -> createDefaultPair());
+        generateMenuItem(fileMenu,"Новый лог", (event) -> addWindow(createLogWindow()));
+        generateMenuItem(fileMenu,"Новая игра", (event) -> addWindow(createGameWindow()));
+        generateMenuItem(fileMenu,"Новый набор окон", (event) -> createDefaultPair());
         generateMenuItem(fileMenu,"Выход", (event) -> closeAll());
-        
+
         JMenu lookAndFeelMenu = new JMenu("Режим отображения");
         lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
         lookAndFeelMenu.getAccessibleContext().setAccessibleDescription("Управление режимом отображения приложения");
         generateMenuItem(lookAndFeelMenu,"Системная схема", (event) ->
-            { setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        { setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             this.invalidate(); });
         generateMenuItem(lookAndFeelMenu,"Универсальная схема", (event) ->
-            { setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        { setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
             this.invalidate(); });
 
         JMenu testMenu = new JMenu("Тесты");
@@ -164,7 +181,7 @@ public class MainApplicationFrame extends JFrame
         item.addActionListener(action);
         menu.add(item);
     }
-    
+
     private void setLookAndFeel(String className)
     {
         try {
@@ -172,7 +189,7 @@ public class MainApplicationFrame extends JFrame
             SwingUtilities.updateComponentTreeUI(this);
         }
         catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e)
+                | IllegalAccessException | UnsupportedLookAndFeelException e)
         { /* Just ignore */ }
     }
 }
