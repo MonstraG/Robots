@@ -20,11 +20,11 @@ public class    RobotMovement extends Observable {
     volatile double m_robotPositionY = 100;
     volatile double m_robotDirection = 0;
 
-    private volatile int m_targetPositionX = 150;
-    private volatile int m_targetPositionY = 100;
+    protected volatile int m_targetPositionX = 150;
+    protected volatile int m_targetPositionY = 100;
 
     private static final double maxVelocity = 0.1;
-    private static final double maxAngularVelocity = 0.001;
+    private static final double maxAngularVelocity = 0.002;
 
     private double velocity;
     private double angularVelocity;
@@ -42,7 +42,6 @@ public class    RobotMovement extends Observable {
     {
         double diffX = toX - fromX;
         double diffY = toY - fromY;
-
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
 
@@ -50,7 +49,6 @@ public class    RobotMovement extends Observable {
     {
 
         moveRobot();
-
     }
 
     private static double applyLimits(double value, double min, double max)
@@ -70,16 +68,15 @@ public class    RobotMovement extends Observable {
             return;
         }
         velocity = maxVelocity;
-        angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
         angularVelocity = 0;
-        if (angleToTarget > m_robotDirection)
+        angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        angleToTarget = asNormalizedRadians(angleToTarget - m_robotDirection);
+        if (angleToTarget < Math.PI)
         {
             angularVelocity = maxAngularVelocity;
         }
-        if (angleToTarget < m_robotDirection)
-        {
+        else
             angularVelocity = -maxAngularVelocity;
-        }
 
         int duration = MainApplicationFrame.globalTimeConst;
         velocity = applyLimits(velocity, 0, maxVelocity);
@@ -102,6 +99,9 @@ public class    RobotMovement extends Observable {
         m_robotPositionX = newX;
         m_robotPositionY = newY;
         m_robotDirection = asNormalizedRadians(m_robotDirection + angularVelocity * duration);
+
+        notifyObservers();
+        setChanged();
     }
 
     private static double asNormalizedRadians(double angle)
