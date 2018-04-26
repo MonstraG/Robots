@@ -16,7 +16,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener
     private LogWindowSource m_logSource;
     private TextArea m_logContent;
 
-    public LogWindow(LogWindowSource logSource) 
+    LogWindow(LogWindowSource logSource)
     {
         //TODO: linking with gameWindow???
         super("Протокол работы", true, true, true, true);

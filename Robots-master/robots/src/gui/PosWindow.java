@@ -13,11 +13,11 @@ public class PosWindow extends JInternalFrame implements Observer {
     private TextArea m_pos;
     private RobotMovement robotMovement;
 
-    public PosWindow(RobotMovement rm) {
+    PosWindow(RobotMovement rm) {
         super("Положение робота", true, true, true, true);
         robotMovement = rm;
         m_pos = new TextArea("");
-        m_pos.setSize(200, 200);
+        m_pos.setSize(200, 300);
         rm.addObserver(this);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_pos, BorderLayout.CENTER);
@@ -33,14 +33,13 @@ public class PosWindow extends JInternalFrame implements Observer {
     }
 
 
-    public void updateInfo() {
-        StringBuilder content = new StringBuilder();
-        content.append("X: ").append(robotMovement.m_robotPositionX).append("\n");
-        content.append("Y: ").append(robotMovement.m_robotPositionY).append("\n");
-        content.append("Угол: ").append((int)(robotMovement.m_robotDirection / Math.PI * 180)).append("° \n");
-        content.append("X цели: ").append(robotMovement.m_targetPositionX).append("\n");
-        content.append("Y цели: ").append(robotMovement.m_targetPositionY).append("\n");
-        m_pos.setText(content.toString());
+    private void updateInfo() {
+        String content = "X: " + robotMovement.m_robotPositionX + "\n" +
+                "Y: " + robotMovement.m_robotPositionY + "\n" +
+                "Угол: " + (int) (robotMovement.m_robotDirection / Math.PI * 180) + "° \n" +
+                "X цели: " + robotMovement.m_targetPositionX + "\n" +
+                "Y цели: " + robotMovement.m_targetPositionY + "\n";
+        m_pos.setText(content);
         m_pos.invalidate();
     }
 }

@@ -16,14 +16,14 @@ import javax.swing.JPanel;
 public class GameVisualizer extends JPanel
 {
 
-    protected double robX;
-    protected double robY;
-    protected double robAngle;
-    protected int robTargetX;
-    protected int robTargetY;
+    double robX;
+    double robY;
+    double robAngle;
+    private int robTargetX;
+    private int robTargetY;
     private final RobotMovement rm;
 
-    public GameVisualizer(RobotMovement robotMovement)
+    GameVisualizer(RobotMovement robotMovement)
     {
         rm = robotMovement;
         updateRobData();
@@ -60,12 +60,12 @@ public class GameVisualizer extends JPanel
         robTargetY = (int)rm.getRobotData()[4];
     }
 
-    protected void setTargetPosition(Point p)
+    private void setTargetPosition(Point p)
     {
         rm.setTarget(p.x, p.y);
     }
 
-    protected void onRedrawEvent()
+    private void onRedrawEvent()
     {
         EventQueue.invokeLater(this::repaint);
     }
@@ -98,6 +98,7 @@ public class GameVisualizer extends JPanel
     
     private void drawRobot(Graphics2D g, int x, int y, double direction)
     {
+        //TODO: turn it into a snake with growing tail ))
         AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
         g.setColor(Color.MAGENTA);
@@ -112,6 +113,7 @@ public class GameVisualizer extends JPanel
     
     private void drawTarget(Graphics2D g, int x, int y)
     {
+        //TODO: make it bigger and red and with small black outline
         AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0); 
         g.setTransform(t);
         g.setColor(Color.GREEN);

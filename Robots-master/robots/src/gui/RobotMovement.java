@@ -1,17 +1,15 @@
 package gui;
 
 import java.util.Observable;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class    RobotMovement extends Observable {
+class RobotMovement extends Observable {
 
-    public double[] getRobotData() { //X,Y,Angle,TargX,TargY
+    double[] getRobotData() {
         return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
                             m_targetPositionX, m_targetPositionY};
     }
 
-    public void setTarget(int x, int y) {
+    void setTarget(int x, int y) {
         m_targetPositionX = x;
         m_targetPositionY = y;
     }
@@ -20,16 +18,11 @@ public class    RobotMovement extends Observable {
     volatile double m_robotPositionY = 100;
     volatile double m_robotDirection = 0;
 
-    protected volatile int m_targetPositionX = 150;
-    protected volatile int m_targetPositionY = 100;
+    volatile int m_targetPositionX = 150;
+    volatile int m_targetPositionY = 100;
 
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
-
-    private double velocity;
-    private double angularVelocity;
-    private double angleToTarget;
-
 
     private static double distance(double x1, double y1, double x2, double y2)
     {
@@ -40,14 +33,12 @@ public class    RobotMovement extends Observable {
 
     private static double angleTo(double fromX, double fromY, double toX, double toY)
     {
-        double diffX = toX - fromX;
-        double diffY = toY - fromY;
-        return asNormalizedRadians(Math.atan2(diffY, diffX));
+        return asNormalizedRadians(Math.atan2(toY - fromY, toX - fromX));
     }
 
-    protected void onModelUpdateEvent()
+    void onModelUpdateEvent()
     {
-
+        //here be code that should be run onModelUpdate but not connected to robot
         moveRobot();
     }
 
@@ -60,28 +51,24 @@ public class    RobotMovement extends Observable {
         return value;
     }
 
-    protected void moveRobot()
+    void moveRobot()
     {
-        double distance = distance(m_targetPositionX, m_targetPositionY,
-            m_robotPositionX, m_robotPositionY);
+        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         if (distance < 0.5) {
             return;
         }
-        velocity = maxVelocity;
-        angularVelocity = 0;
-        angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-        angleToTarget = asNormalizedRadians(angleToTarget - m_robotDirection);
+        double velocity = maxVelocity;
+        double angularVelocity;
+        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        angleToTarget = asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
         if (angleToTarget < Math.PI)
-        {
-            angularVelocity = maxAngularVelocity;
-        }
+            angularVelocity = maxAngularVelocity; //turning left is closer
         else
-            angularVelocity = -maxAngularVelocity;
+            angularVelocity = -maxAngularVelocity; //turing right is closer
 
-        int duration = MainApplicationFrame.globalTimeConst;
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
-
+        int duration = MainApplicationFrame.globalTimeConst;
         double newX = m_robotPositionX + velocity / angularVelocity *
                 (Math.sin(m_robotDirection  + angularVelocity * duration) -
                         Math.sin(m_robotDirection));
@@ -106,6 +93,7 @@ public class    RobotMovement extends Observable {
 
     private static double asNormalizedRadians(double angle)
     {
+        //convert any angle to [0, 2PI)
         while (angle < 0)
             angle += 2*Math.PI;
         while (angle >= 2*Math.PI)

@@ -10,13 +10,12 @@ import javax.swing.*;
 
 import log.Logger;
 
-public class MainApplicationFrame extends JFrame
+class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    public static final int globalTimeConst = 10;
-    private static int windowUID = 0; //needed for good serialization
+    static final int globalTimeConst = 10;
 
-    public MainApplicationFrame() {
+    MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
         int inset = 50;
@@ -55,6 +54,8 @@ public class MainApplicationFrame extends JFrame
                     default:
                         break;
                     //TODO: pos serialisation
+                    //idea: game x y w h [ pos x y w h, log x y w h ] <- like this.
+
                 }
             }
         } catch (Exception e) {
@@ -79,9 +80,11 @@ public class MainApplicationFrame extends JFrame
                 BufferedWriter br = new BufferedWriter(new FileWriter("pos.txt"));
                 Component[] components = getContentPane().getComponents();
                 for (Component component : components) {
-                    br.append(component.getX() + " " + component.getY() + " "
-                            + component.getWidth() + " " + component.getHeight() + " "
-                            + component.getName() + "\n");
+                    br.append(component.getName()).append("\n")
+                      .append(String.valueOf(component.getX())).append(" ")
+                      .append(String.valueOf(component.getY())).append(" ")
+                      .append(String.valueOf(component.getWidth())).append(" ")
+                      .append(String.valueOf(component.getHeight())).append(" ");
                 }
                 br.flush();
                 br.close();

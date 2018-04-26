@@ -10,7 +10,7 @@ public class GameWindow extends JInternalFrame
     private final GameVisualizer m_visualizer;
     private final RobotMovement m_robotMovement;
 
-    public GameWindow()
+    GameWindow()
     {
         super("Игровое поле", true, true, true, true);
         m_robotMovement = new RobotMovement();
@@ -21,17 +21,7 @@ public class GameWindow extends JInternalFrame
         pack();
     }
 
-    public double[] getRobotPos() {
-        return new double[] {m_visualizer.robX,
-                             m_visualizer.robY,
-                             m_visualizer.robAngle};
-    }
-
-    public GameVisualizer getVisualizer() {
-        return m_visualizer;
-    }
-
-    public RobotMovement getRobotMovement() {
+    RobotMovement getRobotMovement() {
         return m_robotMovement;
     }
 }
