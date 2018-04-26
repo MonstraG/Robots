@@ -4,18 +4,7 @@ import java.util.Observable;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class RobotMovement extends Observable {
-
-    private int tickCount;
-
-    private static Timer initTimer() {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
-
-    public RobotMovement() {
-        tickCount = 0;
-    }
+public class    RobotMovement extends Observable {
 
     public double[] getRobotData() { //X,Y,Angle,TargX,TargY
         return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
@@ -37,6 +26,9 @@ public class RobotMovement extends Observable {
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.001;
 
+    private double velocity;
+    private double angularVelocity;
+    private double angleToTarget;
 
 
     private static double distance(double x1, double y1, double x2, double y2)
@@ -56,31 +48,9 @@ public class RobotMovement extends Observable {
 
     protected void onModelUpdateEvent()
     {
-        double distance = distance(m_targetPositionX, m_targetPositionY,
-                m_robotPositionX, m_robotPositionY);
-        if (distance < 0.5)
-        {
-            return;
-        }
-        double velocity = maxVelocity;
-        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-        double angularVelocity = 0;
-        if (angleToTarget > m_robotDirection)
-        {
-            angularVelocity = maxAngularVelocity;
-        }
-        if (angleToTarget < m_robotDirection)
-        {
-            angularVelocity = -maxAngularVelocity;
-        }
-        moveRobot(velocity, angularVelocity, 10);
 
-        tickCount++;
-        if (tickCount % 10 == 0) {
-            notifyObservers();
-            setChanged();
-        }
-        notifyObservers(123);
+        moveRobot();
+
     }
 
     private static double applyLimits(double value, double min, double max)
@@ -92,10 +62,29 @@ public class RobotMovement extends Observable {
         return value;
     }
 
-    private void moveRobot(double velocity, double angularVelocity, double duration)
+    protected void moveRobot()
     {
+        double distance = distance(m_targetPositionX, m_targetPositionY,
+            m_robotPositionX, m_robotPositionY);
+        if (distance < 0.5) {
+            return;
+        }
+        velocity = maxVelocity;
+        angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        angularVelocity = 0;
+        if (angleToTarget > m_robotDirection)
+        {
+            angularVelocity = maxAngularVelocity;
+        }
+        if (angleToTarget < m_robotDirection)
+        {
+            angularVelocity = -maxAngularVelocity;
+        }
+
+        int duration = MainApplicationFrame.globalTimeConst;
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
+
         double newX = m_robotPositionX + velocity / angularVelocity *
                 (Math.sin(m_robotDirection  + angularVelocity * duration) -
                         Math.sin(m_robotDirection));
@@ -112,8 +101,7 @@ public class RobotMovement extends Observable {
         }
         m_robotPositionX = newX;
         m_robotPositionY = newY;
-        double newDirection = asNormalizedRadians(m_robotDirection + angularVelocity * duration);
-        m_robotDirection = newDirection;
+        m_robotDirection = asNormalizedRadians(m_robotDirection + angularVelocity * duration);
     }
 
     private static double asNormalizedRadians(double angle)
@@ -124,7 +112,4 @@ public class RobotMovement extends Observable {
             angle -= 2*Math.PI;
         return angle;
     }
-
-
-
 }

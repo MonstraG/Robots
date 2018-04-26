@@ -37,7 +37,7 @@ public class GameVisualizer extends JPanel
                 onRedrawEvent();
                 rm.moveRobot();
             }
-        }, 0, MainApplicationFrame.GLobalTimeConstant);
+        }, 0, MainApplicationFrame.globalTimeConst);
 
         addMouseListener(new MouseAdapter()
         {
