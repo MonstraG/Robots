@@ -13,6 +13,7 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
+    public static final int GLobalTimeConstant = 10;
 
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge

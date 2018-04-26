@@ -16,42 +16,28 @@ import javax.swing.JPanel;
 public class GameVisualizer extends JPanel
 {
 
-    private final Timer m_timer = initTimer();
-
     protected double robX;
     protected double robY;
     protected double robAngle;
     protected int robTargetX;
     protected int robTargetY;
     private final RobotMovement rm;
-    
-    private static Timer initTimer() 
-    {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
-
 
     public GameVisualizer(RobotMovement robotMovement)
     {
         rm = robotMovement;
         updateRobData();
 
+        Timer m_timer = new Timer("events generator", true);
         m_timer.schedule(new TimerTask()
         {
             @Override
             public void run()
             {
                 onRedrawEvent();
+                rm.moveRobot();
             }
-        }, 0, 10);
-
-        m_timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                rm.onModelUpdateEvent();
-            }
-        },0, 10);
+        }, 0, MainApplicationFrame.GLobalTimeConstant);
 
         addMouseListener(new MouseAdapter()
         {
@@ -60,6 +46,7 @@ public class GameVisualizer extends JPanel
             {
                 setTargetPosition(e.getPoint());
                 repaint();
+                rm.onModelUpdateEvent();
             }
         });
         setDoubleBuffered(true);
@@ -111,18 +98,16 @@ public class GameVisualizer extends JPanel
     
     private void drawRobot(Graphics2D g, int x, int y, double direction)
     {
-        int robotCenterX = x;
-        int robotCenterY = y;
-        AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY); 
+        AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
         g.setColor(Color.MAGENTA);
-        fillOval(g, robotCenterX, robotCenterY, 30, 10);
+        fillOval(g, x, y, 30, 10);
         g.setColor(Color.BLACK);
-        drawOval(g, robotCenterX, robotCenterY, 30, 10);
+        drawOval(g, x, y, 30, 10);
         g.setColor(Color.WHITE);
-        fillOval(g, robotCenterX  + 10, robotCenterY, 5, 5);
+        fillOval(g, x  + 10, y, 5, 5);
         g.setColor(Color.BLACK);
-        drawOval(g, robotCenterX  + 10, robotCenterY, 5, 5);
+        drawOval(g, x  + 10, y, 5, 5);
     }
     
     private void drawTarget(Graphics2D g, int x, int y)

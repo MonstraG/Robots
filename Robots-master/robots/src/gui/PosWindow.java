@@ -17,7 +17,7 @@ public class PosWindow extends JInternalFrame implements Observer {
         super("Положение робота", true, true, true, true);
         robotMovement = rm;
         m_pos = new TextArea("");
-        m_pos.setSize(200, 100);
+        m_pos.setSize(200, 200);
         rm.addObserver(this);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_pos, BorderLayout.CENTER);
@@ -38,6 +38,8 @@ public class PosWindow extends JInternalFrame implements Observer {
         content.append("X: ").append(robotMovement.m_robotPositionX).append("\n");
         content.append("Y: ").append(robotMovement.m_robotPositionY).append("\n");
         content.append("Угол: ").append((int)(robotMovement.m_robotDirection / Math.PI * 180)).append("° \n");
+        content.append("X цели: ").append(robotMovement.m_targetPositionX).append("\n");
+        content.append("Y цели: ").append(robotMovement.m_targetPositionY).append("\n");
         m_pos.setText(content.toString());
         m_pos.invalidate();
     }
