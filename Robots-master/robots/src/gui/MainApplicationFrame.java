@@ -13,7 +13,8 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    public static final int GLobalTimeConstant = 10;
+    public static final int globalTimeConst = 10;
+    private static int windowUID = 0; //needed for good serialization
 
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
@@ -54,8 +55,6 @@ public class MainApplicationFrame extends JFrame
                     default:
                         break;
                     //TODO: pos serialisation
-
-
                 }
             }
         } catch (Exception e) {
