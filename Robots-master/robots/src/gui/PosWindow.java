@@ -1,5 +1,7 @@
 package gui;
 
+import sun.applet.Main;
+
 import java.awt.BorderLayout;
 import java.awt.TextArea;
 import java.util.Observable;
@@ -33,8 +35,8 @@ public class PosWindow extends JInternalFrame implements Observer {
 
 
     private void updateInfo() {
-        String content = "X: " + rounded(robotMovement.m_robotPositionX, 2) + "\n" +
-                "Y: " + rounded(robotMovement.m_robotPositionY, 2) + "\n" +
+        String content = "X: " + RobotMovement.rounded(robotMovement.m_robotPositionX, 2) + "\n" +
+                "Y: " + RobotMovement.rounded(robotMovement.m_robotPositionY, 2) + "\n" +
                 "Угол: " + (int) (robotMovement.m_robotDirection / Math.PI * 180) + "° \n" +
                 "X цели: " + robotMovement.m_targetPositionX + "\n" +
                 "Y цели: " + robotMovement.m_targetPositionY + "\n";
@@ -47,13 +49,6 @@ public class PosWindow extends JInternalFrame implements Observer {
         m_pos.invalidate();
     }
 
-    private double rounded(double num, int accuracy) { //default accuracy is 0, look at overload below
-        num = Math.floor(num * Math.pow(10,accuracy));
-        return num / Math.pow(10,accuracy);
-    }
 
-    private double rounded(double x) {
-        return rounded(x, 0);
-    }
 }
 

@@ -24,7 +24,6 @@ class RobotMovement extends Observable {
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
 
-    //TODO: rotate-before-moving mode
     //TODO: target list with dots on path.
 
     private static double distance(double x1, double y1, double x2, double y2)
@@ -39,17 +38,18 @@ class RobotMovement extends Observable {
         return asNormalizedRadians(Math.atan2(toY - fromY, toX - fromX));
     }
 
-    void onModelUpdateEvent()
+    void onModelUpdateEvent() //this now picks, to rotate or to move
     {
         double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         if (distance > 0.5) { //if target not reached.
-            moveRobot(maxVelocity);
-        }
+            if (lookingAtTarget())
+                moveRobot(maxVelocity, 0);
+            else
+                rotateRobot();
+        } else
+            moveRobot(0, 0);
+
         //here be code that should be run onModelUpdate but not connected to robot
-        //if looking at target {
-        // moveRobot(); (basically velocity = maxVel)
-        //else
-        // rotateRobot();
 
     }
 
@@ -62,24 +62,26 @@ class RobotMovement extends Observable {
         return value;
     }
 
-    void rotateRobot() {
-
-    }
-
-    void moveRobot() { //default speed is FULL SPEED
-        moveRobot(maxVelocity);
-    }
-
-    void moveRobot(double velocity)
-    {
-        double angularVelocity;
+    double angleFromRobot() {
         double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-        angleToTarget = asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
-        if (angleToTarget < Math.PI)
+        return asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
+    }
+
+    boolean lookingAtTarget()  { return rounded(angleFromRobot(), 1) == 0; }
+
+
+    void rotateRobot() {
+        double angularVelocity;
+        if (angleFromRobot() < Math.PI)
             angularVelocity = maxAngularVelocity; //turning left is closer
         else
             angularVelocity = -maxAngularVelocity; //turing right is closer
+        moveRobot(0, angularVelocity);
+    }
 
+
+    void moveRobot(double velocity, double angularVelocity)
+    {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
         int duration = MainApplicationFrame.globalTimeConst;
@@ -113,5 +115,14 @@ class RobotMovement extends Observable {
         while (angle >= 2*Math.PI)
             angle -= 2*Math.PI;
         return angle;
+    }
+
+    protected static double rounded(double num, int accuracy) { //default accuracy is 0, look at overload below
+        num = Math.floor(num * Math.pow(10,accuracy));
+        return num / Math.pow(10,accuracy);
+    }
+
+    protected static double rounded(double x) {
+        return rounded(x, 0);
     }
 }
