@@ -5,6 +5,7 @@ import log.Logger;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Observable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class RobotMovement extends Observable {
 
@@ -34,7 +35,7 @@ class RobotMovement extends Observable {
     private static final double maxAngularVelocity = 0.002;
 
     volatile ArrayList<Point> path = new ArrayList<>();
-    volatile int pointsReached = 0;
+    volatile AtomicInteger pointsReached = new AtomicInteger(0);
 
     //TODO: target list with dots on path.
 
@@ -67,7 +68,7 @@ class RobotMovement extends Observable {
         } else {
             moveRobot(0, 0);
             gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
-            pointsReached++;
+            pointsReached.incrementAndGet();
             Logger.debug("Цель достигнута.");
         }
 
@@ -108,15 +109,15 @@ class RobotMovement extends Observable {
         return value;
     }
 
-    double angleFromRobot() {
+    private double angleFromRobot() {
         double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
         return asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
     }
 
-    boolean lookingAtTarget()  { return rounded(angleFromRobot(), 1) == 0; }
+    private boolean lookingAtTarget()  { return rounded(angleFromRobot(), 1) == 0; }
 
 
-    void rotateRobot() {
+    private void rotateRobot() {
         double angularVelocity;
         if (angleFromRobot() < Math.PI)
             angularVelocity = maxAngularVelocity; //turning left is closer
@@ -126,7 +127,7 @@ class RobotMovement extends Observable {
     }
 
 
-    void moveRobot(double velocity, double angularVelocity)
+    private void moveRobot(double velocity, double angularVelocity)
     {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
@@ -163,12 +164,8 @@ class RobotMovement extends Observable {
         return angle;
     }
 
-    protected static double rounded(double num, int accuracy) { //default accuracy is 0, look at overload below
+    static double rounded(double num, int accuracy) { //default accuracy is 0, look at overload below
         num = Math.floor(num * Math.pow(10,accuracy));
         return num / Math.pow(10,accuracy);
-    }
-
-    protected static double rounded(double x) {
-        return rounded(x, 0);
     }
 }
