@@ -84,6 +84,8 @@ class MainApplicationFrame extends JFrame
                 options[1]);
         if (dialog == JOptionPane.YES_OPTION) {
             try {
+                PrintWriter writer = new PrintWriter("pos.txt");
+                writer.close(); // to clear file before writing
                 BufferedWriter br = new BufferedWriter(new FileWriter("pos.txt"));
                 for (Component component : windowRegistry.keySet()) {
                     br.append(component.getName()).append(" ")
