@@ -5,6 +5,7 @@ import log.Logger;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Observable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class RobotMovement extends Observable {
@@ -34,8 +35,9 @@ class RobotMovement extends Observable {
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
 
-    volatile ArrayList<Point> path = new ArrayList<>();
+    volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
+    volatile CopyOnWriteArrayList<Point> bodyPos = new CopyOnWriteArrayList<>(); //positions of body parts
 
     //TODO: target list with dots on path.
 
@@ -52,16 +54,22 @@ class RobotMovement extends Observable {
         return asNormalizedRadians(Math.atan2(toY - fromY, toX - fromX));
     }
 
-    void onModelUpdateEvent() //this now picks, to rotate or to move
+    void onModelUpdateEvent()
     {
+        //create dotted path to target
         path.clear();
         createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
 
-        //here should be dotted path method call
+        //remember current position for snake-like graphics thingie
+        Point point = new Point();
+        point.setLocation(m_robotPositionX, m_robotPositionY);
+        bodyPos.add(point);
+        if (bodyPos.size() > 20)
+            bodyPos.remove(0); //aka like stack.
 
         double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
-        if (distance > 10) { //if target not reached.
+        if (distance > 10) { //if target not reached, picks rotate or move
             if (lookingAtTarget()) {
                 if (distance > distanceAtMaxSpeed) //if far enough, move at max speed
                     moveRobot(maxVelocity, 0);
@@ -82,14 +90,11 @@ class RobotMovement extends Observable {
         //here be code that should be run onModelUpdate but not connected to robot
     }
 
-    private Point randomPoint() {
+    private Point randomPoint() { //create new target somwhere inside game window
         double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
         double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
         Point result = new Point();
         result.setLocation(x, y);
-        Logger.debug("H: " + gameWindow.getHeight());
-        Logger.debug("w: " + gameWindow.getWidth());
-        Logger.debug(result.toString());
         return result;
     }
 

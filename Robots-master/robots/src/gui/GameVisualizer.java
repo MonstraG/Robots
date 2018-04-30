@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JPanel;
 
@@ -86,10 +87,17 @@ public class GameVisualizer extends JPanel
         super.paint(g);
         updateRobData();
         Graphics2D g2d = (Graphics2D)g; 
-        drawRobot(g2d, round(robX), round(robY), robAngle);
-        for(Point point : rm.path) {
+        drawRobotHead(g2d, round(robX), round(robY), robAngle);
+        for (Point point : rm.path) { // draws path between robot and target
             drawPathPoint(g2d, point.x, point.y);
         }
+        AtomicInteger counter = new AtomicInteger();
+        for (counter.set(0); counter.intValue() < rm.pointsReached.intValue(); counter.incrementAndGet()) {
+            //draw amount of bodies equal to reached points
+            Point point = rm.bodyPos.get(counter.intValue());
+            drawRobotBody(g2d, point.x, point.y, robAngle);
+        }
+
         drawTarget(g2d, robTargetX, robTargetY);
     }
     
@@ -103,9 +111,8 @@ public class GameVisualizer extends JPanel
         g.drawOval(centerX - diam1 / 2, centerY - diam2 / 2, diam1, diam2);
     }
     
-    private void drawRobot(Graphics2D g, int x, int y, double direction)
+    private void drawRobotHead(Graphics2D g, int x, int y, double direction)
     {
-        //TODO: turn it into a snake with growing tail ))
         AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
         g.setColor(Color.GREEN);
@@ -116,6 +123,15 @@ public class GameVisualizer extends JPanel
         fillOval(g, x  + 10, y, 5, 5);
         g.setColor(Color.BLACK);
         drawOval(g, x  + 10, y, 5, 5);
+    }
+
+    private void drawRobotBody(Graphics2D g, int x, int y, double direction) {
+        AffineTransform t = AffineTransform.getRotateInstance(direction, x, y);
+        g.setTransform(t);
+        g.setColor(Color.GREEN);
+        fillOval(g, x, y, 12, 12);
+        g.setColor(Color.BLACK);
+        drawOval(g, x, y, 12, 12);
     }
     
     private void drawTarget(Graphics2D g, int x, int y)
