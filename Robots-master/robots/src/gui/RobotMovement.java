@@ -31,8 +31,9 @@ class RobotMovement extends Observable {
     volatile double m_targetPositionX = 150;
     volatile double m_targetPositionY = 100;
 
-    private static final double maxVelocity = 0.1;
+    private static final double maxVelocity = 10;
     private static final double maxAngularVelocity = 0.002;
+    //TODO: smooth turning
 
     volatile ArrayList<Point> path = new ArrayList<>();
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
@@ -76,10 +77,13 @@ class RobotMovement extends Observable {
     }
 
     private Point randomPoint() {
-        double x = Math.random() * (gameWindow.getWidth()) + gameWindow.getX();
-        double y = Math.random() * (gameWindow.getHeight()) + gameWindow.getX();
+        double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
+        double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
         Point result = new Point();
         result.setLocation(x, y);
+        Logger.debug("H: " + gameWindow.getHeight());
+        Logger.debug("w: " + gameWindow.getWidth());
+        Logger.debug(result.toString());
         return result;
     }
 
