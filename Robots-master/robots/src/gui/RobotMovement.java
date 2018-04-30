@@ -31,9 +31,8 @@ class RobotMovement extends Observable {
     volatile double m_targetPositionX = 150;
     volatile double m_targetPositionY = 100;
 
-    private static final double maxVelocity = 10;
+    private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
-    //TODO: smooth turning
 
     volatile ArrayList<Point> path = new ArrayList<>();
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
@@ -61,12 +60,19 @@ class RobotMovement extends Observable {
         //here should be dotted path method call
 
         double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
+        double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
         if (distance > 10) { //if target not reached.
-            if (lookingAtTarget())
-                moveRobot(maxVelocity, 0);
-            else
+            if (lookingAtTarget()) {
+                if (distance > distanceAtMaxSpeed) //if far enough, move at max speed
+                    moveRobot(maxVelocity, 0);
+                else {
+                    double velocity = maxAngularVelocity * (0.5 + Math.sqrt(25 * distance/distanceAtMaxSpeed));//50% - 100%
+                    moveRobot(velocity, 0);
+                }
+            }
+            else // if not lookingAtTarget
                 rotateRobot();
-        } else {
+        } else { //if too close
             moveRobot(0, 0);
             gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
             pointsReached.incrementAndGet();
@@ -123,10 +129,15 @@ class RobotMovement extends Observable {
 
     private void rotateRobot() {
         double angularVelocity;
-        if (angleFromRobot() < Math.PI)
-            angularVelocity = maxAngularVelocity; //turning left is closer
-        else
-            angularVelocity = -maxAngularVelocity; //turing right is closer
+        int rotation;
+        double angle = angleFromRobot();
+        if (angle < Math.PI)
+            rotation = 1; //turning left is closer
+        else {
+            rotation = -1; //turing right is closer
+            angle -= Math.PI;
+        }
+        angularVelocity = rotation * maxAngularVelocity * (0.5 + Math.sqrt(25 * angle/Math.PI)); //50% - 100%
         moveRobot(0, angularVelocity);
     }
 
@@ -135,6 +146,7 @@ class RobotMovement extends Observable {
     {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
+
         int duration = MainApplicationFrame.globalTimeConst;
         double newX = m_robotPositionX + velocity / angularVelocity *
                 (Math.sin(m_robotDirection  + angularVelocity * duration) -
