@@ -24,6 +24,9 @@ class RobotMovement extends Observable {
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
 
+    //TODO: rotate-before-moving mode
+    //TODO: target list with dots on path.
+
     private static double distance(double x1, double y1, double x2, double y2)
     {
         double diffX = x1 - x2;
@@ -38,8 +41,16 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent()
     {
+        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
+        if (distance > 0.5) { //if target not reached.
+            moveRobot(maxVelocity);
+        }
         //here be code that should be run onModelUpdate but not connected to robot
-        moveRobot();
+        //if looking at target {
+        // moveRobot(); (basically velocity = maxVel)
+        //else
+        // rotateRobot();
+
     }
 
     private static double applyLimits(double value, double min, double max)
@@ -51,13 +62,16 @@ class RobotMovement extends Observable {
         return value;
     }
 
-    void moveRobot()
+    void rotateRobot() {
+
+    }
+
+    void moveRobot() { //default speed is FULL SPEED
+        moveRobot(maxVelocity);
+    }
+
+    void moveRobot(double velocity)
     {
-        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
-        if (distance < 0.5) {
-            return;
-        }
-        double velocity = maxVelocity;
         double angularVelocity;
         double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
         angleToTarget = asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective

@@ -35,7 +35,7 @@ public class GameVisualizer extends JPanel
             public void run()
             {
                 onRedrawEvent();
-                rm.moveRobot();
+                rm.onModelUpdateEvent();
             }
         }, 0, MainApplicationFrame.globalTimeConst);
 
