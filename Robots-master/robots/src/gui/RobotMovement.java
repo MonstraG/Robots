@@ -1,5 +1,7 @@
 package gui;
 
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Observable;
 
 class RobotMovement extends Observable {
@@ -18,16 +20,18 @@ class RobotMovement extends Observable {
     volatile double m_robotPositionY = 100;
     volatile double m_robotDirection = 0;
 
-    volatile int m_targetPositionX = 150;
-    volatile int m_targetPositionY = 100;
+    volatile double m_targetPositionX = 150;
+    volatile double m_targetPositionY = 100;
 
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
 
+    volatile ArrayList<Point> path = new ArrayList<>();
     //TODO: target list with dots on path.
 
     private static double distance(double x1, double y1, double x2, double y2)
     {
+        //rewrite evertyhing to Point??
         double diffX = x1 - x2;
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
@@ -40,6 +44,11 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent() //this now picks, to rotate or to move
     {
+        path.clear();
+        createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+
+        //here should be dotted path method call
+
         double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         if (distance > 0.5) { //if target not reached.
             if (lookingAtTarget())
@@ -48,9 +57,24 @@ class RobotMovement extends Observable {
                 rotateRobot();
         } else
             moveRobot(0, 0);
-
         //here be code that should be run onModelUpdate but not connected to robot
+    }
 
+    private void createPath(double fromX, double fromY, double toX, double toY) {
+        double distance = distance(fromX, fromY, toX, toY);
+        int amount = (int)Math.floor(distance / 10);
+        double diffX = (toX - fromX) / amount;
+        double diffY = (toY - fromY) / amount;
+        double curX = fromX;
+        double curY = fromY;
+
+        while(path.size() < amount){
+            curX += diffX;
+            curY += diffY;
+            Point point = new Point();
+            point.setLocation(curX, curY);
+            path.add(point);
+        }
     }
 
     private static double applyLimits(double value, double min, double max)

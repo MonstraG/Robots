@@ -83,6 +83,9 @@ public class GameVisualizer extends JPanel
         updateRobData();
         Graphics2D g2d = (Graphics2D)g; 
         drawRobot(g2d, round(robX), round(robY), robAngle);
+        for(Point point : rm.path) {
+            drawPathPoint(g2d, point.x, point.y);
+        }
         drawTarget(g2d, robTargetX, robTargetY);
     }
     
@@ -101,10 +104,10 @@ public class GameVisualizer extends JPanel
         //TODO: turn it into a snake with growing tail ))
         AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
-        g.setColor(Color.MAGENTA);
-        fillOval(g, x, y, 30, 10);
+        g.setColor(Color.GREEN);
+        fillOval(g, x, y, 30, 30);
         g.setColor(Color.BLACK);
-        drawOval(g, x, y, 30, 10);
+        drawOval(g, x, y, 30, 30);
         g.setColor(Color.WHITE);
         fillOval(g, x  + 10, y, 5, 5);
         g.setColor(Color.BLACK);
@@ -113,12 +116,19 @@ public class GameVisualizer extends JPanel
     
     private void drawTarget(Graphics2D g, int x, int y)
     {
-        //TODO: make it bigger and red and with small black outline
         AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0); 
         g.setTransform(t);
-        g.setColor(Color.GREEN);
-        fillOval(g, x, y, 5, 5);
+        g.setColor(Color.RED);
+        fillOval(g, x, y, 7, 7);
+        g.setColor(Color.BLACK);
+        drawOval(g, x, y, 7, 7);
+    }
+
+    private void drawPathPoint(Graphics2D g, int x, int y) {
+        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0);
+        g.setTransform(t);
         g.setColor(Color.BLACK);
         drawOval(g, x, y, 5, 5);
     }
+
 }
