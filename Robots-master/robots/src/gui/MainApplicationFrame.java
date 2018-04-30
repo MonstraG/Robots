@@ -6,6 +6,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.*;
 
 import log.Logger;
@@ -13,6 +15,8 @@ import log.Logger;
 class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
+    private HashMap<Component, Component> windowRegistry = new HashMap<>();
+
     static final int globalTimeConst = 10;
 
     MainApplicationFrame() {
@@ -41,20 +45,23 @@ class MainApplicationFrame extends JFrame
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
-                int converted[] = new int[4];
-                for (int i = 0; i < 4; i++)
-                    converted[i] = Integer.parseInt(parts[i]);
-                switch (parts[4]) {
+                int converted[] = new int[9];
+
+                switch (parts[0]) {
                     case "log":
-                        addWindow(createLogWindow(converted[0],converted[1],converted[2],converted[3]));
+                        for (int i = 1; i < 5; i++) //x, y, w, h
+                            converted[i] = Integer.parseInt(parts[i]);
+                        addWindow(createLogWindow(converted[1],converted[2],converted[3],converted[4]));
                         break;
                     case "game":
-                        addWindow(createGameWindow(converted[0],converted[1],converted[2],converted[3]));
+                        for (int i = 1; i < 9; i++) // game(x,y,w,n) pos(x, y, w, h)
+                            converted[i] = Integer.parseInt(parts[i]);
+                        GameWindow gameWindow = createGameWindow(converted[1],converted[2],converted[3],converted[4]);
+                        addWindow(gameWindow);
+                        addWindow(createPosWindow(gameWindow, converted[5], converted[6], converted[7], converted[8]));
                         break;
                     default:
                         break;
-                    //TODO: pos serialisation
-                    //idea: game x y w h [ pos x y w h, log x y w h ] <- like this.
 
                 }
             }
@@ -78,13 +85,22 @@ class MainApplicationFrame extends JFrame
         if (dialog == JOptionPane.YES_OPTION) {
             try {
                 BufferedWriter br = new BufferedWriter(new FileWriter("pos.txt"));
-                Component[] components = getContentPane().getComponents();
-                for (Component component : components) {
-                    br.append(component.getName()).append("\n")
+                for (Component component : windowRegistry.keySet()) {
+                    br.append(component.getName()).append(" ")
                       .append(String.valueOf(component.getX())).append(" ")
                       .append(String.valueOf(component.getY())).append(" ")
                       .append(String.valueOf(component.getWidth())).append(" ")
                       .append(String.valueOf(component.getHeight())).append(" ");
+                    if (component.getName().equals("game") ) { // if game get paired pos window
+                        Component window = windowRegistry.get(component);
+                        br.append(String.valueOf(window.getX())).append(" ")
+                                .append(String.valueOf(window.getY())).append(" ")
+                                .append(String.valueOf(window.getWidth())).append(" ")
+                                .append(String.valueOf(window.getHeight())).append(" ");
+                        //result should be
+                        //game x y w h x y w h
+                    }
+                    br.append(" \n");
                 }
                 br.flush();
                 br.close();
@@ -102,6 +118,7 @@ class MainApplicationFrame extends JFrame
         logWindow.setSize(width, height);
         setMinimumSize(logWindow.getSize());
         Logger.debug("Протокол работает");
+        windowRegistry.put(logWindow, null);
         return logWindow;
     }
 
@@ -114,7 +131,9 @@ class MainApplicationFrame extends JFrame
         gameWindow.setName("game");
         gameWindow.setLocation(x, y);
         gameWindow.setSize(width, height);
-        addWindow(createPosWindow(gameWindow)); //create paired PosWindow
+        PosWindow posWindow = createPosWindow(gameWindow);
+        addWindow(posWindow); //create paired PosWindow
+        windowRegistry.put(gameWindow, posWindow);
         return gameWindow;
     }
 

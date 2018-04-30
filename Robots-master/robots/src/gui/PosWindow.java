@@ -17,12 +17,11 @@ public class PosWindow extends JInternalFrame implements Observer {
         super("Положение робота", true, true, true, true);
         robotMovement = rm;
         m_pos = new TextArea("");
-        m_pos.setSize(200, 300);
+        m_pos.setSize(200, 200);
         rm.addObserver(this);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_pos, BorderLayout.CENTER);
         getContentPane().add(panel);
-        pack();
         updateInfo();
     }
 
