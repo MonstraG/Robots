@@ -39,14 +39,14 @@ public class PosWindow extends JInternalFrame implements Observer {
                 "Y: " + RobotMovement.rounded(robotMovement.m_robotPositionY, 2) + "\n" +
                 "Угол: " + (int) (robotMovement.m_robotDirection / Math.PI * 180) + "° \n" +
                 "X цели: " + robotMovement.m_targetPositionX + "\n" +
-                "Y цели: " + robotMovement.m_targetPositionY + "\n";
+                "Y цели: " + robotMovement.m_targetPositionY + "\n" +
+                "Целей достигнуто: " + robotMovement.pointsReached +"\n";
         try {
             m_pos.setText(content);
         }
         catch (Exception e) {
             System.out.print(e.toString()); // It looks like very small window sizes give lots of errors.
         }
-        m_pos.invalidate();
     }
 
 

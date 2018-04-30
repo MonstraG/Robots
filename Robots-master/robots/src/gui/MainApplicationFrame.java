@@ -19,7 +19,7 @@ class MainApplicationFrame extends JFrame
     private final JDesktopPane desktopPane = new JDesktopPane();
     private HashMap<Component, Component> windowRegistry = new HashMap<>();
 
-    static final int globalTimeConst = 10;
+    static final int globalTimeConst = 25;
 
     MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge

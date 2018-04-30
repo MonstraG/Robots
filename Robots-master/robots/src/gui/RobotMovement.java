@@ -1,5 +1,7 @@
 package gui;
 
+import log.Logger;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Observable;
@@ -32,6 +34,8 @@ class RobotMovement extends Observable {
     private static final double maxAngularVelocity = 0.002;
 
     volatile ArrayList<Point> path = new ArrayList<>();
+    volatile int pointsReached = 0;
+
     //TODO: target list with dots on path.
 
     private static double distance(double x1, double y1, double x2, double y2)
@@ -55,7 +59,7 @@ class RobotMovement extends Observable {
         //here should be dotted path method call
 
         double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
-        if (distance > 0.5) { //if target not reached.
+        if (distance > 10) { //if target not reached.
             if (lookingAtTarget())
                 moveRobot(maxVelocity, 0);
             else
@@ -63,14 +67,16 @@ class RobotMovement extends Observable {
         } else {
             moveRobot(0, 0);
             gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
+            pointsReached++;
+            Logger.debug("Цель достигнута.");
         }
 
         //here be code that should be run onModelUpdate but not connected to robot
     }
 
     private Point randomPoint() {
-        double x = Math.random() * (gameWindow.getWidth() - 20) + gameWindow.getX() + 20;
-        double y = Math.random() * (gameWindow.getHeight() - 20) + gameWindow.getX() + 20;
+        double x = Math.random() * (gameWindow.getWidth()) + gameWindow.getX();
+        double y = Math.random() * (gameWindow.getHeight()) + gameWindow.getX();
         Point result = new Point();
         result.setLocation(x, y);
         return result;
