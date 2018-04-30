@@ -6,6 +6,10 @@ import java.util.Observable;
 
 class RobotMovement extends Observable {
 
+    RobotMovement(GameWindow gw) {
+        gameWindow = gw;
+    }
+
     double[] getRobotData() {
         return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
                             m_targetPositionX, m_targetPositionY};
@@ -15,6 +19,7 @@ class RobotMovement extends Observable {
         m_targetPositionX = x;
         m_targetPositionY = y;
     }
+    private final GameWindow gameWindow;
 
     volatile double m_robotPositionX = 100;
     volatile double m_robotPositionY = 100;
@@ -55,9 +60,20 @@ class RobotMovement extends Observable {
                 moveRobot(maxVelocity, 0);
             else
                 rotateRobot();
-        } else
+        } else {
             moveRobot(0, 0);
+            gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
+        }
+
         //here be code that should be run onModelUpdate but not connected to robot
+    }
+
+    private Point randomPoint() {
+        double x = Math.random() * (gameWindow.getWidth() - 20) + gameWindow.getX() + 20;
+        double y = Math.random() * (gameWindow.getHeight() - 20) + gameWindow.getX() + 20;
+        Point result = new Point();
+        result.setLocation(x, y);
+        return result;
     }
 
     private void createPath(double fromX, double fromY, double toX, double toY) {

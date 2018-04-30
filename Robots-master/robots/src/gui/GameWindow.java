@@ -13,7 +13,7 @@ public class GameWindow extends JInternalFrame
     GameWindow()
     {
         super("Игровое поле", true, true, true, true);
-        m_robotMovement = new RobotMovement();
+        m_robotMovement = new RobotMovement(this);
         m_visualizer = new GameVisualizer(m_robotMovement);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_visualizer, BorderLayout.CENTER);
@@ -24,4 +24,5 @@ public class GameWindow extends JInternalFrame
     RobotMovement getRobotMovement() {
         return m_robotMovement;
     }
+    GameVisualizer getVisualizer() {return m_visualizer; }
 }

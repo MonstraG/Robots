@@ -44,12 +44,16 @@ public class GameVisualizer extends JPanel
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                setTargetPosition(e.getPoint());
-                repaint();
+                createNewTargetAndRedraw(e.getPoint());
                 rm.onModelUpdateEvent();
             }
         });
         setDoubleBuffered(true);
+    }
+
+    void createNewTargetAndRedraw(Point point) {
+        setTargetPosition(point);
+        repaint();
     }
 
     private void updateRobData() {
@@ -105,9 +109,9 @@ public class GameVisualizer extends JPanel
         AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
         g.setColor(Color.GREEN);
-        fillOval(g, x, y, 30, 30);
+        fillOval(g, x, y, 15, 15);
         g.setColor(Color.BLACK);
-        drawOval(g, x, y, 30, 30);
+        drawOval(g, x, y, 15, 15);
         g.setColor(Color.WHITE);
         fillOval(g, x  + 10, y, 5, 5);
         g.setColor(Color.BLACK);
