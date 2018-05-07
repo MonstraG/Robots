@@ -96,7 +96,7 @@ class MainApplicationFrame extends JFrame
                       .append(String.valueOf(component.getWidth())).append(" ")
                       .append(String.valueOf(component.getHeight())).append(" ");
                     if (component.getName().equals("game") ) { // if game get paired pos window
-                        Component window = windowRegistry.get(component);
+                        Component window = windowRegistry.get(component); //from hashmap
                         br.append(String.valueOf(window.getX())).append(" ")
                                 .append(String.valueOf(window.getY())).append(" ")
                                 .append(String.valueOf(window.getWidth())).append(" ")
