@@ -7,11 +7,11 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.swing.JPanel;
+import obstacles.*;
 
 public class GameVisualizer extends JPanel
 {
@@ -23,6 +23,7 @@ public class GameVisualizer extends JPanel
     private int robTargetY;
     private final RobotMovement rm;
 
+    ArrayList<AbstractObstacle> obstacles = new ArrayList<>();
 
     GameVisualizer(RobotMovement robotMovement)
     {
@@ -47,10 +48,19 @@ public class GameVisualizer extends JPanel
             @Override
             public void mouseClicked(MouseEvent e)
             {
-                createNewTargetAndRedraw(e.getPoint());
-                rm.createPath();
-                if(!rm.gameWindow.gamePaused)
-                    rm.onModelUpdateEvent();
+                int mButton = e.getButton();
+
+                if (mButton == MouseEvent.BUTTON3) { //right mouse button, create obstacle
+                    RectangleObstacle square = new RectangleObstacle(e.getPoint());
+                    obstacles.add(square);
+                }
+                else //left mouse button, create target
+                {
+                    createNewTargetAndRedraw(e.getPoint());
+                    if(!rm.gameWindow.gamePaused) {
+                        rm.onModelUpdateEvent();
+                    }
+                }
             }
         });
         setDoubleBuffered(true);
@@ -60,7 +70,6 @@ public class GameVisualizer extends JPanel
         setTargetPosition(point);
         repaint();
     }
-
 
     private void updateRobData() {
         robX = rm.getRobotData()[0];
@@ -87,12 +96,25 @@ public class GameVisualizer extends JPanel
     {
         super.paint(g);
         updateRobData();
-        Graphics2D g2d = (Graphics2D)g; 
+        Graphics2D g2d = (Graphics2D)g;
+
+        for (AbstractObstacle obstacle : obstacles) {
+            String obsType = obstacle.getType();
+            switch (obsType) {
+                case "square":
+                    drawRectangle(g2d, (RectangleObstacle)obstacle);
+                    break;
+                default:
+                    break;
+            }
+        }
+
         drawRobotHead(g2d, round(robX), round(robY), robAngle);
         for (Point point : rm.path) { // draws path between robot and target
             drawPathPoint(g2d, point.x, point.y);
         }
         drawTarget(g2d, robTargetX, robTargetY);
+
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
@@ -145,4 +167,14 @@ public class GameVisualizer extends JPanel
         drawOval(g, x, y, 5, 5);
     }
 
+    private void drawRectangle(Graphics2D g, RectangleObstacle square) {
+        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0);
+        g.setTransform(t);
+        Point center = square.getPosition();
+        int size = square.getSize();
+        g.setColor(Color.BLUE);
+        g.fillRect(center.x - size / 2, center.y - size / 2, size, size);
+        g.setColor(Color.BLACK);
+        g.drawRect(center.x - size / 2, center.y - size / 2, size, size);
+    }
 }

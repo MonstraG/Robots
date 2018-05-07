@@ -1,8 +1,12 @@
 package gui;
 
 import log.Logger;
+import obstacles.AbstractObstacle;
+
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Observable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,6 +17,11 @@ class RobotMovement extends Observable {
         gameWindow = gw;
     }
 
+    HashMap<Point, ArrayList<Point>> pathGraph = new HashMap<>();
+    ArrayList<Point> graphPoints = new ArrayList<>();
+    ArrayList<Point> obstaclePoints = new ArrayList<>();
+    ArrayList<Line> collisionLines = new ArrayList<>();
+
     double[] getRobotData() {
         return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
                             m_targetPositionX, m_targetPositionY};
@@ -21,7 +30,80 @@ class RobotMovement extends Observable {
     void setTarget(int x, int y) {
         m_targetPositionX = x;
         m_targetPositionY = y;
+        Point target = new Point(x, y);
+
+        //path
+        path.clear();
+        if (gameWindow.getVisualizer().obstacles.size() == 0) //if no obstacles
+        {
+            double distance = distance(m_robotPositionX, m_robotPositionY, x, y);
+            int amount = (int) Math.floor(distance / 20);
+            double diffX = (x - m_robotPositionX) / amount;
+            double diffY = (y - m_robotPositionY) / amount;
+            double curX = m_robotPositionX;
+            double curY = m_robotPositionY;
+
+            while (path.size() < amount) {
+                Point point = new Point();
+                curX += diffX;
+                curY += diffY;
+                point.setLocation(curX, curY);
+                path.add(point);
+            }
+            path.add(new Point(x, y));
+        }
+        else //if obstacles are present
+        {
+            //clear everything
+            pathGraph.clear();
+            graphPoints.clear();
+            obstaclePoints.clear();
+            collisionLines.clear();
+
+            //initialize graph without edges
+            pathGraph.put(new Point((int)m_robotPositionX, (int)m_robotPositionY), new ArrayList<>());
+            for(Point p : graphPoints) {
+                pathGraph.put(p,new ArrayList<>());
+            }
+            pathGraph.put(target, new ArrayList<>());
+
+            //take all anchors from all objects, take all collision lines
+            for (AbstractObstacle obs : gameWindow.getVisualizer().obstacles) {
+                graphPoints.addAll(obs.getAnchors());
+                collisionLines.addAll(obs.getCollisionPairs());
+            }
+
+            //take all collision lines
+
+            //create edges
+            for(Point i : graphPoints) {
+                for(Point j : graphPoints) {
+                    if (i != j) { //ignore loops
+                        Line edge = new Line(i, j);
+                        for (Line col : collisionLines) {
+                            if (!edge.intersect(col)) {
+                                pathGraph.get(i).add(j);
+                            }
+                        }
+                    }
+                }
+            }
+            //it will run SO SLOOOW, I'm sure.
+
+            //run pathfinder
+            //TODO: add pathfinder
+
+            //done
+        }
+
+        updateTarget();
     }
+
+    void updateTarget() {
+        m_targetPositionX = path.get(0).x;
+        m_targetPositionY = path.get(0).y;
+    }
+
     final GameWindow gameWindow;
 
     volatile double m_robotPositionX = 100;
@@ -37,16 +119,12 @@ class RobotMovement extends Observable {
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
 
-    private static double distance(double x1, double y1, double x2, double y2)
+    static double distance(double x1, double y1, double x2, double y2)
     {
         //rewrite evertyhing to Point??
         double diffX = x1 - x2;
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
-    }
-
-    private double robotTargetDistance() {
-        return distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
     }
 
     private static double angleTo(double fromX, double fromY, double toX, double toY)
@@ -60,11 +138,6 @@ class RobotMovement extends Observable {
         //here be code that should be run onModelUpdate but not connected to robot
     }
 
-    void newTarget() {
-        m_targetPositionX = path.get(0).x;
-        m_targetPositionY = path.get(0).y;
-    }
-
     void pointIsReached() {
         double distance;
         //checking for points from path
@@ -72,7 +145,12 @@ class RobotMovement extends Observable {
             distance = distance(m_robotPositionX, m_robotPositionY, path.get(0).x, path.get(0).y);
             if (distance < 20) { //if close enough
                 path.remove(0);
-                gameWindow.getVisualizer().repaint();
+                if (path.size() > 0) {
+                    updateTarget();
+                    gameWindow.getVisualizer().repaint();
+                }
+                else
+                    gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
             }
         }
 
@@ -91,33 +169,10 @@ class RobotMovement extends Observable {
                 rotateRobot();
         } else { //if too close
             moveRobot(0, 0);
-            gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
+            Point target = randomPoint();
+            gameWindow.getVisualizer().createNewTargetAndRedraw(target);
             pointsReached.incrementAndGet();
             Logger.debug("Цель достигнута.");
-            createPath();
-        }
-    }
-
-    void createPath() {
-        //create dotted path to target
-        path.clear();
-        createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-    }
-
-    private void createPath(double fromX, double fromY, double toX, double toY) {
-        double distance = distance(fromX, fromY, toX, toY);
-        int amount = (int)Math.floor(distance / 20);
-        double diffX = (toX - fromX) / amount;
-        double diffY = (toY - fromY) / amount;
-        double curX = fromX;
-        double curY = fromY;
-
-        while(path.size() < amount){
-            Point point = new Point();
-            curX += diffX;
-            curY += diffY;
-            point.setLocation(curX, curY);
-            path.add(point);
         }
     }
 
