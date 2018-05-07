@@ -6,7 +6,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
 
@@ -219,4 +218,5 @@ class MainApplicationFrame extends JFrame
                 | IllegalAccessException | UnsupportedLookAndFeelException e)
         { /* Just ignore */ }
     }
+
 }

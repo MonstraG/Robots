@@ -1,7 +1,6 @@
 package gui;
 
 import java.awt.Color;
-import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -24,6 +23,7 @@ public class GameVisualizer extends JPanel
     private int robTargetY;
     private final RobotMovement rm;
 
+
     GameVisualizer(RobotMovement robotMovement)
     {
         rm = robotMovement;
@@ -35,8 +35,10 @@ public class GameVisualizer extends JPanel
             @Override
             public void run()
             {
+                if(!rm.gameWindow.gamePaused) {
                 onRedrawEvent();
-                rm.onModelUpdateEvent();
+                rm.pointIsReached();
+                }
             }
         }, 0, MainApplicationFrame.globalTimeConst);
 
@@ -46,7 +48,9 @@ public class GameVisualizer extends JPanel
             public void mouseClicked(MouseEvent e)
             {
                 createNewTargetAndRedraw(e.getPoint());
-                rm.onModelUpdateEvent();
+                rm.createPath();
+                if(!rm.gameWindow.gamePaused)
+                    rm.onModelUpdateEvent();
             }
         });
         setDoubleBuffered(true);
@@ -56,6 +60,7 @@ public class GameVisualizer extends JPanel
         setTargetPosition(point);
         repaint();
     }
+
 
     private void updateRobData() {
         robX = rm.getRobotData()[0];
@@ -72,14 +77,10 @@ public class GameVisualizer extends JPanel
 
     private void onRedrawEvent()
     {
-        EventQueue.invokeLater(this::repaint);
+        repaint();
     }
-    
 
-    private static int round(double value)
-    {
-        return (int)(value + 0.5);
-    }
+    private static int round(double value) { return (int)(value + 0.5); }
     
     @Override
     public void paint(Graphics g)
@@ -91,13 +92,6 @@ public class GameVisualizer extends JPanel
         for (Point point : rm.path) { // draws path between robot and target
             drawPathPoint(g2d, point.x, point.y);
         }
-        AtomicInteger counter = new AtomicInteger();
-        for (counter.set(0); counter.intValue() < rm.pointsReached.intValue(); counter.incrementAndGet()) {
-            //draw amount of bodies equal to reached points
-            Point point = rm.bodyPos.get(counter.intValue());
-            drawRobotBody(g2d, point.x, point.y, robAngle);
-        }
-
         drawTarget(g2d, robTargetX, robTargetY);
     }
     

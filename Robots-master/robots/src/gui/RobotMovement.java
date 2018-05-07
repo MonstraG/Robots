@@ -3,7 +3,6 @@ package gui;
 import log.Logger;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Observable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +22,7 @@ class RobotMovement extends Observable {
         m_targetPositionX = x;
         m_targetPositionY = y;
     }
-    private final GameWindow gameWindow;
+    final GameWindow gameWindow;
 
     volatile double m_robotPositionX = 100;
     volatile double m_robotPositionY = 100;
@@ -37,9 +36,6 @@ class RobotMovement extends Observable {
 
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
-    volatile CopyOnWriteArrayList<Point> bodyPos = new CopyOnWriteArrayList<>(); //positions of body parts
-
-    //TODO: target list with dots on path.
 
     private static double distance(double x1, double y1, double x2, double y2)
     {
@@ -49,6 +45,10 @@ class RobotMovement extends Observable {
         return Math.sqrt(diffX * diffX + diffY * diffY);
     }
 
+    private double robotTargetDistance() {
+        return distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
+    }
+
     private static double angleTo(double fromX, double fromY, double toX, double toY)
     {
         return asNormalizedRadians(Math.atan2(toY - fromY, toX - fromX));
@@ -56,18 +56,27 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent()
     {
-        //create dotted path to target
-        path.clear();
-        createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        pointIsReached();
+        //here be code that should be run onModelUpdate but not connected to robot
+    }
 
-        //remember current position for snake-like graphics thingie
-        Point point = new Point();
-        point.setLocation(m_robotPositionX, m_robotPositionY);
-        bodyPos.add(point);
-        if (bodyPos.size() > 20)
-            bodyPos.remove(0); //aka like stack.
+    void newTarget() {
+        m_targetPositionX = path.get(0).x;
+        m_targetPositionY = path.get(0).y;
+    }
 
-        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
+    void pointIsReached() {
+        double distance;
+        //checking for points from path
+        if (path.size() > 0) { //if points do exist
+            distance = distance(m_robotPositionX, m_robotPositionY, path.get(0).x, path.get(0).y);
+            if (distance < 20) { //if close enough
+                path.remove(0);
+                gameWindow.getVisualizer().repaint();
+            }
+        }
+
+        distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
         if (distance > 10) { //if target not reached, picks rotate or move
             if (lookingAtTarget()) {
@@ -85,34 +94,39 @@ class RobotMovement extends Observable {
             gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
             pointsReached.incrementAndGet();
             Logger.debug("Цель достигнута.");
+            createPath();
         }
-
-        //here be code that should be run onModelUpdate but not connected to robot
     }
 
-    private Point randomPoint() { //create new target somwhere inside game window
-        double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
-        double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
-        Point result = new Point();
-        result.setLocation(x, y);
-        return result;
+    void createPath() {
+        //create dotted path to target
+        path.clear();
+        createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
     }
 
     private void createPath(double fromX, double fromY, double toX, double toY) {
         double distance = distance(fromX, fromY, toX, toY);
-        int amount = (int)Math.floor(distance / 10);
+        int amount = (int)Math.floor(distance / 20);
         double diffX = (toX - fromX) / amount;
         double diffY = (toY - fromY) / amount;
         double curX = fromX;
         double curY = fromY;
 
         while(path.size() < amount){
+            Point point = new Point();
             curX += diffX;
             curY += diffY;
-            Point point = new Point();
             point.setLocation(curX, curY);
             path.add(point);
         }
+    }
+
+    private Point randomPoint() { //create new target somewhere inside game window
+        double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
+        double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
+        Point result = new Point();
+        result.setLocation(x, y);
+        return result;
     }
 
     private static double applyLimits(double value, double min, double max)
@@ -145,7 +159,6 @@ class RobotMovement extends Observable {
         angularVelocity = rotation * maxAngularVelocity * (0.5 + Math.sqrt(25 * angle/Math.PI)); //50% - 100%
         moveRobot(0, angularVelocity);
     }
-
 
     private void moveRobot(double velocity, double angularVelocity)
     {
