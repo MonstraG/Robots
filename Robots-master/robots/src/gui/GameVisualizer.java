@@ -53,6 +53,9 @@ public class GameVisualizer extends JPanel
                 if (mButton == MouseEvent.BUTTON3) { //right mouse button, create obstacle
                     RectangleObstacle square = new RectangleObstacle(e.getPoint());
                     obstacles.add(square);
+                    Point oldTarget = new Point();
+                    oldTarget.setLocation(rm.m_targetPositionX, rm.m_targetPositionY);
+                    createNewTargetAndRedraw(oldTarget);
                 }
                 else //left mouse button, create target
                 {

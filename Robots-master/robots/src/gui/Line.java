@@ -1,35 +1,75 @@
 package gui;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
-public class Line {
+public class Line extends Line2D{
     Point p1;
     Point p2;
-    double lenght;
+    double length;
+    double diffX;
+    double diffY;
 
     public Line(Point p1, Point p2) {
         this.p1 = p1;
         this.p2 = p2;
-        this.lenght = RobotMovement.distance(p1.x, p1.y, p2.x, p2.y);
+        this.length = RobotMovement.distance(p1.x, p1.y, p2.x, p2.y);
+        this.diffX = Math.abs(p1.x - p2.x);
+        this.diffY = Math.abs(p1.y - p2.y);
     }
 
-    public void setP1(Point p) {this.p1 = p;}
-    public void setP2(Point p) {this.p2 = p;}
+    @Override
+    public double getX1() {
+        return p1.x;
+    }
 
-    public Point getP1() {return p1;}
-    public Point getP2() {return p2;}
+    @Override
+    public double getY1() {
+        return p1.y;
+    }
 
-    public boolean intersect(Line l) {
-        boolean result = false;
-        //make y = ax + b
-        double a1 = (this.p2.y - this.p1.y) / (this.p2.x - this.p1.x);
-        double b1 = this.p1.y - a1 * this.p1.x;
-        double a2 = (l.p2.y - l.p1.y) / (l.p2.x - l.p1.x);
-        double b2 = l.p1.y - a2 * l.p1.x;
-        double x0 = -(b1 - b2) / (a1 - a2); //intersection
-        if (((Math.min(this.p1.x, this.p2.x) < x0) && (x0 < Math.max(this.p1.x, this.p2.x))) && //lies in first line
-        ((Math.min(l.p1.x, l.p2.x) < x0) && (x0 < Math.max(l.p1.x, l.p2.x)))) //lies in second line
-            result = true;
-        return result;
+    @Override
+    public Point2D getP1() {
+        return p1;
+    }
+
+    @Override
+    public double getX2() {
+        return p2.x;
+    }
+
+    @Override
+    public double getY2() {
+        return p2.y;
+    }
+
+    @Override
+    public Point2D getP2() {
+        return p2;
+    }
+
+    @Override
+    public void setLine(double v, double v1, double v2, double v3) {
+        Point p = new Point();
+        p.setLocation(v, v1);
+        this.p1 = p;
+        p.setLocation(v2, v3);
+        this.p2 = p;
+        this.length = RobotMovement.distance(p1.x, p1.y, p2.x, p2.y);
+        this.diffX = Math.abs(p1.x - p2.x);
+        this.diffY = Math.abs(p1.y - p2.y);
+    }
+
+
+    @Override
+    public Rectangle2D getBounds2D() {
+        return null;
+    }
+
+    @Override
+    public boolean intersectsLine(Line2D line2D) {
+        return super.intersectsLine(line2D);
     }
 }
