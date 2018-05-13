@@ -5,7 +5,6 @@ import obstacles.AbstractObstacle;
 
 
 import java.awt.*;
-import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
@@ -20,6 +19,7 @@ class RobotMovement extends Observable {
 
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
 
+    private Boolean additionalLogging = true;
 
 
     double[] getRobotData() {
@@ -65,6 +65,9 @@ class RobotMovement extends Observable {
                 graphPoints.add(start);
                 graphPoints.addAll(obs.getAnchors());
                 graphPoints.add(target);
+                if (additionalLogging)
+                    System.out.println("Points:" + graphPoints.size());
+
                 collisionLines.addAll(obs.getCollisionPairs());
                 if (collisionLines.isEmpty())
                     try {
@@ -72,7 +75,10 @@ class RobotMovement extends Observable {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                if (additionalLogging)
+                    System.out.println("Collision: " + collisionLines.size());
             }
+
 
             //initialize graph verticies
             for (Point p : graphPoints) {
@@ -81,82 +87,47 @@ class RobotMovement extends Observable {
 
             //add edges to graph
             for (int i = 0; i < graphPoints.size(); i++) {
-                for (int j = i + 1; j < graphPoints.size(); j++) {
+                secondPoint:
+                for (int j = 0; j < graphPoints.size(); j++) {
                     Point a = graphPoints.get(i);
                     Point b = graphPoints.get(j);
-                    for (Line col : collisionLines) {
-                        if (col.intersectsLine(new Line(a, b))) {
-                            ArrayList<Point> next;
-                            next = graph.get(a);
+                    if (!a.equals(b)) { //if actually different points
+                        for (Line col : collisionLines) {
+                            if (col.intersectsLine(new Line(a, b))) { //does not collide
+                                continue secondPoint;
+                            }
+                        }
+                        if (!graph.get(a).contains(b)) {
+                            ArrayList<Point> next = graph.get(a);
                             next.add(b);
                             graph.replace(a, next);
-                            next = graph.get(b);
-                            next.add(a);
-                            graph.replace(b, next);
                         }
                     }
                 }
             }
-
-            for(Point each : graph.keySet()) {
-                System.out.print(each.toString().replace("java.awt.Point", ""));
-                System.out.print(": ");
-                for(Point each2 : graph.get(each)) {
-                    System.out.print(each2.toString().replace("java.awt.Point", ""));
+            if (additionalLogging) {
+                int size = 0;
+                for (Point point : graph.keySet()) {
+                    for (Point p2 : graph.get(point)) {
+                        size++;
+                    }
                 }
-                System.out.println("");
+                System.out.println("Size: " + size);
+
+                for (Point each : graph.keySet()) {
+                    System.out.print(each.toString().replace("java.awt.Point", ""));
+                    System.out.print(": ");
+                    for (Point each2 : graph.get(each)) {
+                        System.out.print(each2.toString().replace("java.awt.Point", ""));
+                    }
+                    System.out.println();
+                }
+                System.out.println();
             }
-            System.out.println("");
-
-
-            //run pathfinder
-//            HashMap<Point, Double> dist = new HashMap<>();
-//            HashMap<Point, Point> prev = new HashMap<>();
-//            ArrayList<Point> queue = new ArrayList<>(graphPoints);
-//            for(Point each : graphPoints)
-//                dist.put(each, Double.POSITIVE_INFINITY);
-//            if(!dist.containsKey(start))
-//                dist.put(start, 0.0);
-//            else
-//                dist.replace(start, 0.0);
-//            queue.add(start);
-//
-//            while(!queue.isEmpty()) {
-//                Point p = new Point();
-//                //find minimum in queue
-//                dist.put(p, Double.POSITIVE_INFINITY);
-//                for(Point each : queue)
-//                    if (dist.containsKey(each))
-//                        if (dist.get(each) < dist.get(p)) {
-//                            p = each;
-//                        }
-//                    else
-//                        if (distance(p.x, p.y, each.x, each.y) < dist.get(p))
-//                            p = each;
-//
-//                queue.remove(p);
-//
-//                //find neighbors
-//                double altDist;
-//                    for (Point neighbor : graph.get(p)) {
-//                            altDist = dist.get(p) + distance(neighbor.x, neighbor.y, p.x, p.y);
-//                            if (altDist < dist.get(neighbor)) {
-//                                dist.replace(neighbor, altDist);
-//                                prev.put(neighbor, p);
-//                            }
-//                        }
-//            }
-//            //get path
-//            Point next = target;
-//            while (prev.containsKey(next)) {
-//                path.add(0, next);
-//                next = prev.get(next);
-//            }
-//            path.add(0, next);
-//            //done
 
             //BFS
             ArrayList<Point> queue = new ArrayList<>();
+            ArrayList<Point> used = new ArrayList<>();
             HashMap<Point, Double> dist = new HashMap<>();
             HashMap<Point, Point> prev = new HashMap<>();
             queue.add(start);
@@ -167,41 +138,46 @@ class RobotMovement extends Observable {
 
             while (!queue.isEmpty()) {
                 Point current = queue.get(0);
-                ArrayList<Point> adjacent = graph.get(current);
-                queue.addAll(adjacent);
-                for(Point each : adjacent) {
-                    double currentDist = dist.get(each);
-                    double newDist = dist.get(current) + distance(current.x, current.y, each.x, each.y);
-                    if (newDist < currentDist) {
-                        dist.put(current, distance(current.x, current.y, each.x, each.y));
-                        prev.put(each, current);
-                    }
+                used.add(current);
+                ArrayList<Point> adjacents = graph.get(current);
+                for(Point adjacent : graph.get(current)) {
+                    if ((!used.contains(adjacent)) && (!queue.contains(adjacent)))
+                        queue.add(adjacent);
                 }
-                //end for
-                if (current.equals(target))
-                    break;
-
+                for(Point adjacent : adjacents) {
+                    double currentDist = dist.get(adjacent);
+                    double newDist = dist.get(current) + distance(current.x, current.y, adjacent.x, adjacent.y);
+                    if (newDist < currentDist) {
+                        dist.replace(adjacent, newDist);
+                        prev.put(adjacent, current);
+                    }
+                } //end for
                 queue.remove(0);
             }
+
+            if(additionalLogging) { //prints prev
+                for(Point each : prev.keySet()) {
+                    System.out.print(each + ": ");
+                    System.out.println(prev.get(each));
+                }
+                System.out.println();
+            }
+
+            //build path
             Point next = target;
             while (prev.containsKey(next)) {
                 path.add(0, next);
                 next = prev.get(next);
             }
             path.add(0, next);
-//            for(Point each : prev.keySet()) {
-//                System.out.print(each.toString().replace("java.awt.Point", ""));
-//                System.out.print(": ");
-//                    System.out.print(prev.get(each).toString().replace("java.awt.Point", ""));
-//                System.out.println("");
-//            }
 
-            if(prev.isEmpty()) {
-                try {
-                    throw  new Exception("Algorithm did nothing!");
-                } catch (Exception e) {
-                    e.printStackTrace();
+            if (additionalLogging) { //prints path
+                for (Point each : path) {
+                    if (each == start)
+                        System.out.print("Start: ");
+                    System.out.println(each.toString().replace("java.awt.Point", ""));
                 }
+                System.out.println();
             }
         }
 
@@ -251,7 +227,7 @@ class RobotMovement extends Observable {
         //checking for points from path
         if (path.size() > 0) { //if points do exist
             distance = distance(m_robotPositionX, m_robotPositionY, path.get(0).x, path.get(0).y);
-            if (distance < 20) { //if close enough
+            if (distance < 10) { //if close enough
                 path.remove(0);
                 if (path.size() > 0) {
                     updateTarget();
