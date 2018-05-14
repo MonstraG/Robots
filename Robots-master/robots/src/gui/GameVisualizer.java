@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -31,15 +32,16 @@ public class GameVisualizer extends JPanel
         updateRobData();
 
         Timer m_timer = new Timer("events generator", true);
+
         m_timer.schedule(new TimerTask()
         {
             @Override
             public void run()
             {
                 if(!rm.gameWindow.gamePaused) {
-                onRedrawEvent();
-                rm.onModelUpdateEvent();
+                    rm.onModelUpdateEvent();
                 }
+                repaint();
             }
         }, 0, MainApplicationFrame.globalTimeConst);
 
@@ -49,29 +51,34 @@ public class GameVisualizer extends JPanel
             public void mouseClicked(MouseEvent e)
             {
                 int mButton = e.getButton();
-
-                if (mButton == MouseEvent.BUTTON3) { //right mouse button, create obstacle
-                    RectangleObstacle square = new RectangleObstacle(e.getPoint());
-                    obstacles.add(square);
-                    Point oldTarget = new Point();
-                    oldTarget.setLocation(rm.m_targetPositionX, rm.m_targetPositionY);
-                    createNewTargetAndRedraw(oldTarget);
-                }
-                else //left mouse button, create target
-                {
-                    createNewTargetAndRedraw(e.getPoint());
-                    if(!rm.gameWindow.gamePaused) {
-                        rm.onModelUpdateEvent();
+                switch (mButton) {
+                    case MouseEvent.BUTTON1: { //LMB, create target
+                        setTargetPosition(e.getPoint());
+                        if(!rm.gameWindow.gamePaused) {
+                            rm.onModelUpdateEvent();
+                        }
+                        break;
+                    }
+                    case MouseEvent.BUTTON3: { //RMB, create obstacle
+                        RectangleObstacle square = new RectangleObstacle(e.getPoint());
+                        obstacles.add(square);
+                        Point oldTarget = new Point(robTargetX, robTargetY);
+                        setTargetPosition(oldTarget);
+                        break;
+                    }
+                    case MouseEvent.BUTTON2: { //MMB, remove last obstacle
+                        obstacles.remove(obstacles.size() -1);
+                        Point oldTarget = new Point(robTargetX, robTargetY);
+                        setTargetPosition(oldTarget);
+                        break;
                     }
                 }
+
+                repaint();
             }
         });
-        setDoubleBuffered(true);
-    }
 
-    void createNewTargetAndRedraw(Point point) {
-        setTargetPosition(point);
-        repaint();
+        setDoubleBuffered(true);
     }
 
     private void updateRobData() {
@@ -82,18 +89,10 @@ public class GameVisualizer extends JPanel
         robTargetY = (int)rm.getRobotData()[4];
     }
 
-    private void setTargetPosition(Point p)
-    {
-        while(true) {
-            if (rm.setTarget(p.x, p.y))
-                break;
+    void setTargetPosition(Point p) {
+        while (!rm.setTarget(p.x, p.y)) { //try to create new target until succeed
             p = rm.randomPoint();
         }
-    }
-
-    private void onRedrawEvent()
-    {
-        repaint();
     }
 
     private static int round(double value) { return (int)(value + 0.5); }
