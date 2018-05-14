@@ -32,11 +32,28 @@ public class RectangleObstacle extends AbstractObstacle {
         //down right
         anchorPoints.add(new Point(topleftCorner.x + size + anchorDistance, topleftCorner.y + size + anchorDistance));
 
-        //collision pairs, adding diagonals
-        Line line = new Line(verticies.get(0), verticies.get(3));
-        collisionPairs.add(line);
-        line = new Line(verticies.get(1), verticies.get(2));
-        collisionPairs.add(line);
+        //collision points
+        Point temp = anchorPoints.get(0);
+        collisionPoints.add(new Point(temp.x + anchorDistance/2, temp.y + anchorDistance/2));
 
+        temp = anchorPoints.get(1);
+        collisionPoints.add(new Point(temp.x + anchorDistance/2, temp.y - anchorDistance/2));
+
+        temp = anchorPoints.get(2);
+        collisionPoints.add(new Point(temp.x - anchorDistance/2, temp.y + anchorDistance/2));
+
+        temp = anchorPoints.get(3);
+        collisionPoints.add(new Point(temp.x - anchorDistance/2, temp.y - anchorDistance/2));
+
+
+        //collision pairs, adding diagonals
+        Line line = new Line(collisionPoints.get(0), collisionPoints.get(2)); //up
+        collisionPairs.add(line);
+        line = new Line(collisionPoints.get(1), collisionPoints.get(3)); // down
+        collisionPairs.add(line);
+        line = new Line(collisionPoints.get(0), collisionPoints.get(1)); // left
+        collisionPairs.add(line);
+        line = new Line(collisionPoints.get(2), collisionPoints.get(3)); // right
+        collisionPairs.add(line);
     }
 }

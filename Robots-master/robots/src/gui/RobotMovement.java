@@ -27,7 +27,7 @@ class RobotMovement extends Observable {
                             m_targetPositionX, m_targetPositionY};
     }
 
-    void setTarget(int x, int y) {
+    boolean setTarget(int x, int y) {
         m_targetPositionX = x;
         m_targetPositionY = y;
         Point start = new Point((int)m_robotPositionX, (int)m_robotPositionY);
@@ -105,6 +105,10 @@ class RobotMovement extends Observable {
                     }
                 }
             }
+
+            if (graph.get(target).size() == 0) //if target is unreachable
+                return false;
+
             if (additionalLogging) {
                 int size = 0;
                 for (Point point : graph.keySet()) {
@@ -182,6 +186,7 @@ class RobotMovement extends Observable {
         }
 
         updateTarget();
+        return true;
     }
 
     void updateTarget() {
@@ -218,29 +223,27 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent()
     {
-        pointIsReached();
-        //here be code that should be run onModelUpdate but not connected to robot
-    }
-
-    void pointIsReached() {
         double distance;
         //checking for points from path
         if (path.size() > 0) { //if points do exist
             distance = distance(m_robotPositionX, m_robotPositionY, path.get(0).x, path.get(0).y);
-            if (distance < 10) { //if close enough
+            if (distance < 5) { //if close enough
                 path.remove(0);
-                if (path.size() > 0) {
+                if (path.size() > 0) { //if that wasn't last target
                     updateTarget();
                     gameWindow.getVisualizer().repaint();
                 }
-                else
+                else {
                     gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
+                    pointsReached.incrementAndGet();
+                    Logger.debug("Цель достигнута.");
+                }
             }
         }
 
         distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
         double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
-        if (distance > 10) { //if target not reached, picks rotate or move
+        if (distance >= 5) { //if target not reached, picks rotate or move
             if (lookingAtTarget()) {
                 if (distance > distanceAtMaxSpeed) //if far enough, move at max speed
                     moveRobot(maxVelocity, 0);
@@ -253,14 +256,10 @@ class RobotMovement extends Observable {
                 rotateRobot();
         } else { //if too close
             moveRobot(0, 0);
-            Point target = randomPoint();
-            gameWindow.getVisualizer().createNewTargetAndRedraw(target);
-            pointsReached.incrementAndGet();
-            Logger.debug("Цель достигнута.");
         }
     }
 
-    private Point randomPoint() { //create new target somewhere inside game window
+    Point randomPoint() { //create new target somewhere inside game window
         double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
         double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
         Point result = new Point();

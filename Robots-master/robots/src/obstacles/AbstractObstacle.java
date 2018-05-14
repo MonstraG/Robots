@@ -11,6 +11,7 @@ public abstract class AbstractObstacle {
     int anchorDistance = 10;
     ArrayList<Point> verticies = new ArrayList<>();
     ArrayList<Point> anchorPoints = new ArrayList<>();
+    ArrayList<Point> collisionPoints = new ArrayList<>();
     ArrayList<Line> collisionPairs = new ArrayList<>();
 
     public String getType() { return type; }

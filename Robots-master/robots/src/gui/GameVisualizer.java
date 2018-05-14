@@ -38,7 +38,7 @@ public class GameVisualizer extends JPanel
             {
                 if(!rm.gameWindow.gamePaused) {
                 onRedrawEvent();
-                rm.pointIsReached();
+                rm.onModelUpdateEvent();
                 }
             }
         }, 0, MainApplicationFrame.globalTimeConst);
@@ -84,7 +84,11 @@ public class GameVisualizer extends JPanel
 
     private void setTargetPosition(Point p)
     {
-        rm.setTarget(p.x, p.y);
+        while(true) {
+            if (rm.setTarget(p.x, p.y))
+                break;
+            p = rm.randomPoint();
+        }
     }
 
     private void onRedrawEvent()
@@ -135,13 +139,13 @@ public class GameVisualizer extends JPanel
         AffineTransform t = AffineTransform.getRotateInstance(direction, x, y); 
         g.setTransform(t);
         g.setColor(Color.GREEN);
-        fillOval(g, x, y, 15, 15);
+        fillOval(g, x, y, 10, 10);
         g.setColor(Color.BLACK);
-        drawOval(g, x, y, 15, 15);
+        drawOval(g, x, y, 10, 10);
         g.setColor(Color.WHITE);
-        fillOval(g, x  + 10, y, 5, 5);
+        fillOval(g, x  + 6, y, 4, 4);
         g.setColor(Color.BLACK);
-        drawOval(g, x  + 10, y, 5, 5);
+        drawOval(g, x  + 6, y, 4, 4);
     }
 
     private void drawRobotBody(Graphics2D g, int x, int y, double direction) {
