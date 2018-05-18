@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -62,7 +61,12 @@ public class GameVisualizer extends JPanel
                     case MouseEvent.BUTTON3: { //RMB, create obstacle
                         RectangleObstacle square = new RectangleObstacle(e.getPoint());
                         obstacles.add(square);
-                        Point oldTarget = new Point(robTargetX, robTargetY);
+                        Point oldTarget;
+                        if (rm.path.size() > 0) { //if there is path, get last in path
+                            oldTarget = rm.path.get(rm.path.size() - 1);
+                        } else { //else get wat now is considered "target"
+                            oldTarget = new Point(robTargetX, robTargetY);
+                        }
                         setTargetPosition(oldTarget);
                         break;
                     }
@@ -114,13 +118,16 @@ public class GameVisualizer extends JPanel
                     break;
             }
         }
-
-        drawRobotHead(g2d, round(robX), round(robY), robAngle);
+        Point previous = new Point(round(robX), round(robY));
         for (Point point : rm.path) { // draws path between robot and target
             drawPathPoint(g2d, point.x, point.y);
+            drawPathLine(g2d, point.x, point.y, previous.x, previous.y);
+            previous = point;
         }
         drawTarget(g2d, robTargetX, robTargetY);
-
+        if (rm.path.size() > 0)
+            drawTarget(g2d, rm.path.get(rm.path.size()- 1).x, rm.path.get(rm.path.size()- 1).y);
+        drawRobotHead(g2d, round(robX), round(robY), robAngle);
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)
@@ -164,6 +171,14 @@ public class GameVisualizer extends JPanel
         fillOval(g, x, y, 7, 7);
         g.setColor(Color.BLACK);
         drawOval(g, x, y, 7, 7);
+    }
+
+    private void drawPathLine(Graphics2D g, int x1, int y1, int x2, int y2) {
+        AffineTransform t = AffineTransform.getRotateInstance(0, 0, 0);
+        g.setTransform(t);
+        g.setColor(Color.BLUE);
+        g.drawLine(x1, y1, x2, y2);
+
     }
 
     private void drawPathPoint(Graphics2D g, int x, int y) {

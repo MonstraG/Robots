@@ -17,7 +17,7 @@ class RobotMovement extends Observable {
         gameWindow = gw;
     }
 
-    private Boolean additionalLogging = true;
+    private Boolean additionalLogging = false;
 
     final GameWindow gameWindow;
 
@@ -30,6 +30,7 @@ class RobotMovement extends Observable {
 
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
+    private static final double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
 
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
@@ -52,18 +53,6 @@ class RobotMovement extends Observable {
         {
             double distance = distance(m_robotPositionX, m_robotPositionY, x, y);
             int amount = (int) Math.floor(distance / 20);
-            double diffX = (x - m_robotPositionX) / amount;
-            double diffY = (y - m_robotPositionY) / amount;
-            double curX = m_robotPositionX;
-            double curY = m_robotPositionY;
-
-            while (path.size() < amount) {
-                Point point = new Point();
-                curX += diffX;
-                curY += diffY;
-                point.setLocation(curX, curY);
-                path.add(point);
-            }
             path.add(new Point(x, y));
         }
         else //if obstacles are present
@@ -194,7 +183,6 @@ class RobotMovement extends Observable {
                 System.out.println();
             }
         }
-
         updateTarget();
         return true;
     }
@@ -222,7 +210,7 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent()
     {
-        //todo: rework
+
         double distance = distance(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
         if (distance < targetReachDist) {//if target was reached
             if (path.size() > 0) { //safety
@@ -242,14 +230,8 @@ class RobotMovement extends Observable {
             }
 
         } else { //if target haven't been reached
-            double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
             if (lookingAtTarget()) {
-                if (distance > distanceAtMaxSpeed) { //move at max speed
-                    moveRobot(maxVelocity, 0);
-                } else { //move at variable speeds
-                    double velocity = maxAngularVelocity * (0.5 + Math.sqrt(25 * distance / distanceAtMaxSpeed));//50% - 100%
-                    moveRobot(velocity, 0);
-                }
+                moveRobot(maxVelocity, 0);
             } else { //if not looking at target
                 rotateRobot();
             }
@@ -274,7 +256,7 @@ class RobotMovement extends Observable {
             rotation = -1; //turing right is closer
             angle -= Math.PI;
         }
-        angularVelocity = rotation * maxAngularVelocity * (0.5 + Math.sqrt(25 * angle/Math.PI)); //50% - 100%
+        angularVelocity = rotation * maxAngularVelocity;
         moveRobot(0, angularVelocity);
     }
 
