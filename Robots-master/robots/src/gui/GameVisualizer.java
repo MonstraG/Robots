@@ -1,9 +1,6 @@
 package gui;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -15,20 +12,13 @@ import obstacles.*;
 
 public class GameVisualizer extends JPanel
 {
-
-    double robX;
-    double robY;
-    double robAngle;
-    private int robTargetX;
-    private int robTargetY;
-    private final RobotMovement rm;
+    private final GameWindow gw;
 
     ArrayList<AbstractObstacle> obstacles = new ArrayList<>();
 
-    GameVisualizer(RobotMovement robotMovement)
+    GameVisualizer(GameWindow gameWindow)
     {
-        rm = robotMovement;
-        updateRobData();
+        gw = gameWindow;
 
         Timer m_timer = new Timer("events generator", true);
 
@@ -37,8 +27,10 @@ public class GameVisualizer extends JPanel
             @Override
             public void run()
             {
-                if(!rm.gameWindow.gamePaused) {
-                    rm.onModelUpdateEvent();
+                if(!gw.gamePaused) {
+                   for(RobotMovement each : gw.getRobots()) {
+                       each.onModelUpdateEvent();
+                   }
                 }
                 repaint();
             }
@@ -52,9 +44,12 @@ public class GameVisualizer extends JPanel
                 int mButton = e.getButton();
                 switch (mButton) {
                     case MouseEvent.BUTTON1: { //LMB, create target
-                        setTargetPosition(e.getPoint());
-                        if(!rm.gameWindow.gamePaused) {
-                            rm.onModelUpdateEvent();
+                        for(RobotMovement each : gw.getRobots())
+                            setTargetPosition(each, e.getPoint());
+                        if(!gw.gamePaused) {
+                            for(RobotMovement each : gw.getRobots()) {
+                                each.onModelUpdateEvent();
+                            }
                         }
                         break;
                     }
@@ -62,18 +57,24 @@ public class GameVisualizer extends JPanel
                         RectangleObstacle square = new RectangleObstacle(e.getPoint());
                         obstacles.add(square);
                         Point oldTarget;
-                        if (rm.path.size() > 0) { //if there is path, get last in path
-                            oldTarget = rm.path.get(rm.path.size() - 1);
-                        } else { //else get wat now is considered "target"
-                            oldTarget = new Point(robTargetX, robTargetY);
+                        for(RobotMovement each : gw.getRobots()) {
+                            if (each.path.size() > 0) { //if there is path, get last in path
+                                oldTarget = each.path.get(each.path.size() - 1);
+                            } else { //else get wat now is considered "target"
+                                oldTarget = new Point((int)each.m_targetPositionX, (int)each.m_robotPositionY);
+                            }
+                            setTargetPosition(each, oldTarget);
                         }
-                        setTargetPosition(oldTarget);
+
                         break;
                     }
                     case MouseEvent.BUTTON2: { //MMB, remove last obstacle
                         obstacles.remove(obstacles.size() -1);
-                        Point oldTarget = new Point(robTargetX, robTargetY);
-                        setTargetPosition(oldTarget);
+                        for(RobotMovement each : gw.getRobots()) {
+                            Point oldTarget = new Point((int)each.m_targetPositionX,(int)each.m_robotPositionY);
+                            setTargetPosition(each, oldTarget);
+                        }
+
                         break;
                     }
                 }
@@ -85,15 +86,7 @@ public class GameVisualizer extends JPanel
         setDoubleBuffered(true);
     }
 
-    private void updateRobData() {
-        robX = rm.getRobotData()[0];
-        robY = rm.getRobotData()[1];
-        robAngle = rm.getRobotData()[2];
-        robTargetX = (int)rm.getRobotData()[3];
-        robTargetY = (int)rm.getRobotData()[4];
-    }
-
-    void setTargetPosition(Point p) {
+    void setTargetPosition(RobotMovement rm, Point p) {
         while (!rm.setTarget(p.x, p.y)) { //try to create new target until succeed
             p = rm.randomPoint();
         }
@@ -105,7 +98,6 @@ public class GameVisualizer extends JPanel
     public void paint(Graphics g)
     {
         super.paint(g);
-        updateRobData();
         Graphics2D g2d = (Graphics2D)g;
 
         for (AbstractObstacle obstacle : obstacles) {
@@ -118,16 +110,18 @@ public class GameVisualizer extends JPanel
                     break;
             }
         }
-        Point previous = new Point(round(robX), round(robY));
-        for (Point point : rm.path) { // draws path between robot and target
-            drawPathPoint(g2d, point.x, point.y);
-            drawPathLine(g2d, point.x, point.y, previous.x, previous.y);
-            previous = point;
+        for(RobotMovement each : gw.getRobots()) {
+            Point previous = new Point(round(each.m_robotPositionX), round(each.m_robotPositionY));
+            for (Point point : each.path) { // draws path between robot and target
+                drawPathPoint(g2d, point.x, point.y);
+                drawPathLine(g2d, point.x, point.y, previous.x, previous.y);
+                previous = point;
+            }
+            drawTarget(g2d, (int)each.m_targetPositionX,(int)each.m_targetPositionY);
+            if (each.path.size() > 0)
+                drawTarget(g2d, each.path.get(each.path.size() - 1).x, each.path.get(each.path.size() - 1).y);
+            drawRobotHead(g2d, round(each.m_robotPositionX), round(each.m_robotPositionY), each.m_robotDirection);
         }
-        drawTarget(g2d, robTargetX, robTargetY);
-        if (rm.path.size() > 0)
-            drawTarget(g2d, rm.path.get(rm.path.size()- 1).x, rm.path.get(rm.path.size()- 1).y);
-        drawRobotHead(g2d, round(robX), round(robY), robAngle);
     }
     
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2)

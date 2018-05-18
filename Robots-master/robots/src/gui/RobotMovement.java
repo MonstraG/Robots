@@ -218,13 +218,13 @@ class RobotMovement extends Observable {
                 if (path.size() > 0) { //if this wasn't last one
                     updateTarget();
                 } else { //if it was last
-                    gameWindow.getVisualizer().setTargetPosition(randomPoint());
+                    gameWindow.getVisualizer().setTargetPosition(this, randomPoint());
                     pointsReached.incrementAndGet();
                     Logger.debug("Цель достигнута.");
                 }
             } else { //if target was reached, but path haven't been created.
                 //think as if last point was already removed
-                gameWindow.getVisualizer().setTargetPosition(randomPoint());
+                gameWindow.getVisualizer().setTargetPosition(this, randomPoint());
                 pointsReached.incrementAndGet();
                 Logger.debug("Цель достигнута.");
             }
