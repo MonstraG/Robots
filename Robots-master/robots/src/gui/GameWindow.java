@@ -16,7 +16,7 @@ public class GameWindow extends JInternalFrame
     boolean gamePaused = false;
 
     GameWindow() {
-        super("Игровое поле", true, true, true, true);
+        super("Игровое поле", true, true, true, true); //window
         m_robotMovement = new RobotMovement(this);
         m_visualizer = new GameVisualizer(m_robotMovement);
         JPanel panel = new JPanel(new BorderLayout());
@@ -24,8 +24,7 @@ public class GameWindow extends JInternalFrame
         getContentPane().add(panel);
         pack();
 
-        JMenuBar menu = new JMenuBar();
-
+        JMenuBar menu = new JMenuBar(); //menu and pause
         JButton pause = new JButton();
         try {
             Image img = ImageIO.read(getClass().getResource("/img/pause.png"));
@@ -33,10 +32,7 @@ public class GameWindow extends JInternalFrame
         } catch (Exception ex) {
             System.out.println(ex);
         }
-
-
         pause.setMnemonic(KeyEvent.VK_SPACE);
-
         pause.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
