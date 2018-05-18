@@ -1,7 +1,5 @@
 package gui;
 
-import sun.applet.Main;
-
 import java.awt.BorderLayout;
 import java.awt.TextArea;
 import java.util.Observable;

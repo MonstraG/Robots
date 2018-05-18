@@ -15,7 +15,6 @@ import log.Logger;
 class MainApplicationFrame extends JFrame
 {
 
-    //TODO: creating new random points when reached mode;
     private final JDesktopPane desktopPane = new JDesktopPane();
     private HashMap<Component, ArrayList<Component>> windowRegistry = new HashMap<>();
 

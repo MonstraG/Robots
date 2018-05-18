@@ -4,13 +4,12 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.security.Key;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class GameWindow extends JInternalFrame
+class GameWindow extends JInternalFrame
 {
 
     private final GameVisualizer m_visualizer;
@@ -81,16 +80,14 @@ public class GameWindow extends JInternalFrame
 
     }
     private void pauseGame() {
-        if(gamePaused)
-           gamePaused = false;
-        else gamePaused = true;
+        gamePaused = !gamePaused;
     }
 
     void addNewRobot() {
         robotList.add( new RobotMovement(this));
     }
 
-    void removeLastRobot() {
+    private void removeLastRobot() {
         if (robotList.size() > 0)
             robotList.remove(robotList.size() - 1);
     }

@@ -17,9 +17,7 @@ class RobotMovement extends Observable {
         gameWindow = gw;
     }
 
-    private Boolean additionalLogging = false;
-
-    final GameWindow gameWindow;
+    private final GameWindow gameWindow;
 
     volatile double m_robotPositionX = 100;
     volatile double m_robotPositionY = 100;
@@ -30,16 +28,10 @@ class RobotMovement extends Observable {
 
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.002;
-    private static final double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
 
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
-    static final double targetReachDist = 5;
-
-    double[] getRobotData() {
-        return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
-                m_targetPositionX, m_targetPositionY};
-    }
+    private static final double targetReachDist = 5;
 
     boolean setTarget(int x, int y) {
         m_targetPositionX = x;
@@ -50,11 +42,7 @@ class RobotMovement extends Observable {
         //path
         path.clear();
         if (gameWindow.getVisualizer().obstacles.size() == 0) //if no obstacles
-        {
-            double distance = distance(m_robotPositionX, m_robotPositionY, x, y);
-            int amount = (int) Math.floor(distance / 20);
             path.add(new Point(x, y));
-        }
         else //if obstacles are present
         {
             HashMap<Point, ArrayList<Point>> graph = new HashMap<>();
@@ -63,6 +51,7 @@ class RobotMovement extends Observable {
             //clear everything
 
             //take all anchors from all objects, take all collision lines
+            Boolean additionalLogging = false;
             for (AbstractObstacle obs : gameWindow.getVisualizer().obstacles) {
                 graphPoints.add(start);
                 graphPoints.addAll(obs.getAnchors());
@@ -90,18 +79,17 @@ class RobotMovement extends Observable {
             //add edges to graph
             for (int i = 0; i < graphPoints.size(); i++) {
                 secondPoint:
-                for (int j = 0; j < graphPoints.size(); j++) {
+                for (Point graphPoint : graphPoints) {
                     Point a = graphPoints.get(i);
-                    Point b = graphPoints.get(j);
-                    if (!a.equals(b)) { //if actually different points
+                    if (!a.equals(graphPoint)) { //if actually different points
                         for (Line col : collisionLines) {
-                            if (col.intersectsLine(new Line(a, b))) { //does not collide
+                            if (col.intersectsLine(new Line(a, graphPoint))) { //does not collide
                                 continue secondPoint;
                             }
                         }
-                        if (!graph.get(a).contains(b)) {
+                        if (!graph.get(a).contains(graphPoint)) {
                             ArrayList<Point> next = graph.get(a);
-                            next.add(b);
+                            next.add(graphPoint);
                             graph.replace(a, next);
                         }
                     }
@@ -187,20 +175,16 @@ class RobotMovement extends Observable {
         return true;
     }
 
-    void updateTarget() {
+    private void updateTarget() {
         m_targetPositionX = path.get(0).x;
         m_targetPositionY = path.get(0).y;
     }
 
-    static double distance(double x1, double y1, double x2, double y2)
+    private static double distance(double x1, double y1, double x2, double y2)
     {
         double diffX = x1 - x2;
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
-    }
-
-    static double distance(Point p1, Point p2) {
-        return distance(p1.x, p1.y, p2.x, p2.y);
     }
 
     private static double angleTo(double fromX, double fromY, double toX, double toY)
@@ -248,16 +232,12 @@ class RobotMovement extends Observable {
 
     private void rotateRobot() {
         double angularVelocity;
-        int rotation;
         double angle = angleFromRobot();
         if (angle < Math.PI)
-            rotation = 1; //turning left is closer
-        else {
-            rotation = -1; //turing right is closer
-            angle -= Math.PI;
-        }
-        angularVelocity = rotation * maxAngularVelocity;
-        moveRobot(0, angularVelocity);
+            angularVelocity = maxAngularVelocity; //turning left is closer
+        else
+            angularVelocity = -maxAngularVelocity; //turing right is closer
+         moveRobot(0, angularVelocity);
     }
 
     private void moveRobot(double velocity, double angularVelocity)
