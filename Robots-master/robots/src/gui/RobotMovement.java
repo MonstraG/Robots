@@ -1,9 +1,12 @@
 package gui;
 
 import log.Logger;
+import obstacles.AbstractObstacle;
+
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Observable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,15 +17,6 @@ class RobotMovement extends Observable {
         gameWindow = gw;
     }
 
-    double[] getRobotData() {
-        return new double[] {m_robotPositionX, m_robotPositionY, m_robotDirection,
-                            m_targetPositionX, m_targetPositionY};
-    }
-
-    void setTarget(int x, int y) {
-        m_targetPositionX = x;
-        m_targetPositionY = y;
-    }
     private final GameWindow gameWindow;
 
     volatile double m_robotPositionX = 100;
@@ -37,13 +31,157 @@ class RobotMovement extends Observable {
 
     volatile CopyOnWriteArrayList<Point> path = new CopyOnWriteArrayList<>(); //dotted path to target
     volatile AtomicInteger pointsReached = new AtomicInteger(0);
-    volatile CopyOnWriteArrayList<Point> bodyPos = new CopyOnWriteArrayList<>(); //positions of body parts
+    private static final double targetReachDist = 5;
 
-    //TODO: target list with dots on path.
+    boolean setTarget(int x, int y) {
+        m_targetPositionX = x;
+        m_targetPositionY = y;
+        Point start = new Point((int)m_robotPositionX, (int)m_robotPositionY);
+        Point target = new Point(x, y);
+
+        //path
+        path.clear();
+        if (gameWindow.getVisualizer().obstacles.size() == 0) //if no obstacles
+            path.add(new Point(x, y));
+        else //if obstacles are present
+        {
+            HashMap<Point, ArrayList<Point>> graph = new HashMap<>();
+            ArrayList<Point> graphPoints = new ArrayList<>();
+            ArrayList<Line> collisionLines = new ArrayList<>();
+            //clear everything
+
+            //take all anchors from all objects, take all collision lines
+            Boolean additionalLogging = false;
+            for (AbstractObstacle obs : gameWindow.getVisualizer().obstacles) {
+                graphPoints.add(start);
+                graphPoints.addAll(obs.getAnchors());
+                graphPoints.add(target);
+                if (additionalLogging)
+                    System.out.println("Points:" + graphPoints.size());
+
+                collisionLines.addAll(obs.getCollisionPairs());
+                if (collisionLines.isEmpty())
+                    try {
+                        throw new Exception("Obstacles are present, but have no collision");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                if (additionalLogging)
+                    System.out.println("Collision: " + collisionLines.size());
+            }
+
+
+            //initialize graph verticies
+            for (Point p : graphPoints) {
+                graph.put(p, new ArrayList<>());
+            }
+
+            //add edges to graph
+            for (int i = 0; i < graphPoints.size(); i++) {
+                secondPoint:
+                for (Point graphPoint : graphPoints) {
+                    Point a = graphPoints.get(i);
+                    if (!a.equals(graphPoint)) { //if actually different points
+                        for (Line col : collisionLines) {
+                            if (col.intersectsLine(new Line(a, graphPoint))) { //does not collide
+                                continue secondPoint;
+                            }
+                        }
+                        if (!graph.get(a).contains(graphPoint)) {
+                            ArrayList<Point> next = graph.get(a);
+                            next.add(graphPoint);
+                            graph.replace(a, next);
+                        }
+                    }
+                }
+            }
+
+            if (graph.get(target).size() == 0) //if target is unreachable
+                return false;
+
+            if (additionalLogging) {
+                int size = 0;
+                for (Point point : graph.keySet())
+                    size += graph.get(point).size();
+                System.out.println("Graph size: " + size);
+
+                for (Point each : graph.keySet()) {
+                    System.out.print(each.toString().replace("java.awt.Point", ""));
+                    System.out.print(": ");
+                    for (Point each2 : graph.get(each)) {
+                        System.out.print(each2.toString().replace("java.awt.Point", ""));
+                    }
+                    System.out.println();
+                }
+                System.out.println();
+            }
+
+            //BFS
+            ArrayList<Point> queue = new ArrayList<>();
+            ArrayList<Point> used = new ArrayList<>();
+            HashMap<Point, Double> dist = new HashMap<>();
+            HashMap<Point, Point> prev = new HashMap<>();
+            queue.add(start);
+            for(Point each : graphPoints) {
+                dist.put(each, Double.POSITIVE_INFINITY);
+            }
+            dist.replace(start, 0.0);
+
+            while (!queue.isEmpty()) {
+                Point current = queue.get(0);
+                used.add(current);
+                ArrayList<Point> adjacents = graph.get(current);
+                for(Point adjacent : graph.get(current)) {
+                    if ((!used.contains(adjacent)) && (!queue.contains(adjacent)))
+                        queue.add(adjacent);
+                }
+                for(Point adjacent : adjacents) {
+                    double currentDist = dist.get(adjacent);
+                    double newDist = dist.get(current) + distance(current.x, current.y, adjacent.x, adjacent.y);
+                    if (newDist < currentDist) {
+                        dist.replace(adjacent, newDist);
+                        prev.put(adjacent, current);
+                    }
+                } //end for
+                queue.remove(0);
+            }
+
+            if(additionalLogging) { //prints prev
+                for(Point each : prev.keySet()) {
+                    System.out.print(each + ": ");
+                    System.out.println(prev.get(each));
+                }
+                System.out.println();
+            }
+
+            //build path
+            Point next = target;
+            while (prev.containsKey(next)) {
+                path.add(0, next);
+                next = prev.get(next);
+            }
+            path.add(0, next);
+
+            if (additionalLogging) { //prints path
+                for (Point each : path) {
+                    if (each == start)
+                        System.out.print("Start: ");
+                    System.out.println(each.toString().replace("java.awt.Point", ""));
+                }
+                System.out.println();
+            }
+        }
+        updateTarget();
+        return true;
+    }
+
+    private void updateTarget() {
+        m_targetPositionX = path.get(0).x;
+        m_targetPositionY = path.get(0).y;
+    }
 
     private static double distance(double x1, double y1, double x2, double y2)
     {
-        //rewrite evertyhing to Point??
         double diffX = x1 - x2;
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
@@ -56,41 +194,35 @@ class RobotMovement extends Observable {
 
     void onModelUpdateEvent()
     {
-        //create dotted path to target
-        path.clear();
-        createPath(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
 
-        //remember current position for snake-like graphics thingie
-        Point point = new Point();
-        point.setLocation(m_robotPositionX, m_robotPositionY);
-        bodyPos.add(point);
-        if (bodyPos.size() > 20)
-            bodyPos.remove(0); //aka like stack.
-
-        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
-        double distanceAtMaxSpeed = maxVelocity * MainApplicationFrame.globalTimeConst;
-        if (distance > 10) { //if target not reached, picks rotate or move
-            if (lookingAtTarget()) {
-                if (distance > distanceAtMaxSpeed) //if far enough, move at max speed
-                    moveRobot(maxVelocity, 0);
-                else {
-                    double velocity = maxAngularVelocity * (0.5 + Math.sqrt(25 * distance/distanceAtMaxSpeed));//50% - 100%
-                    moveRobot(velocity, 0);
+        double distance = distance(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        if (distance < targetReachDist) {//if target was reached
+            if (path.size() > 0) { //safety
+                path.remove(0);
+                if (path.size() > 0) { //if this wasn't last one
+                    updateTarget();
+                } else { //if it was last
+                    gameWindow.getVisualizer().setTargetPosition(this, randomPoint());
+                    pointsReached.incrementAndGet();
+                    Logger.debug("Цель достигнута.");
                 }
+            } else { //if target was reached, but path haven't been created.
+                //think as if last point was already removed
+                gameWindow.getVisualizer().setTargetPosition(this, randomPoint());
+                pointsReached.incrementAndGet();
+                Logger.debug("Цель достигнута.");
             }
-            else // if not lookingAtTarget
-                rotateRobot();
-        } else { //if too close
-            moveRobot(0, 0);
-            gameWindow.getVisualizer().createNewTargetAndRedraw(randomPoint());
-            pointsReached.incrementAndGet();
-            Logger.debug("Цель достигнута.");
-        }
 
-        //here be code that should be run onModelUpdate but not connected to robot
+        } else { //if target haven't been reached
+            if (lookingAtTarget()) {
+                moveRobot(maxVelocity, 0);
+            } else { //if not looking at target
+                rotateRobot();
+            }
+        }
     }
 
-    private Point randomPoint() { //create new target somwhere inside game window
+    Point randomPoint() { //returns new point somewhere inside game window
         double x = Math.random() * (gameWindow.getWidth() - 100) + 50;
         double y = Math.random() * (gameWindow.getHeight() - 100) + 50;
         Point result = new Point();
@@ -98,54 +230,15 @@ class RobotMovement extends Observable {
         return result;
     }
 
-    private void createPath(double fromX, double fromY, double toX, double toY) {
-        double distance = distance(fromX, fromY, toX, toY);
-        int amount = (int)Math.floor(distance / 10);
-        double diffX = (toX - fromX) / amount;
-        double diffY = (toY - fromY) / amount;
-        double curX = fromX;
-        double curY = fromY;
-
-        while(path.size() < amount){
-            curX += diffX;
-            curY += diffY;
-            Point point = new Point();
-            point.setLocation(curX, curY);
-            path.add(point);
-        }
-    }
-
-    private static double applyLimits(double value, double min, double max)
-    {
-        if (value < min)
-            return min;
-        if (value > max)
-            return max;
-        return value;
-    }
-
-    private double angleFromRobot() {
-        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
-        return asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
-    }
-
-    private boolean lookingAtTarget()  { return rounded(angleFromRobot(), 1) == 0; }
-
-
     private void rotateRobot() {
         double angularVelocity;
-        int rotation;
         double angle = angleFromRobot();
         if (angle < Math.PI)
-            rotation = 1; //turning left is closer
-        else {
-            rotation = -1; //turing right is closer
-            angle -= Math.PI;
-        }
-        angularVelocity = rotation * maxAngularVelocity * (0.5 + Math.sqrt(25 * angle/Math.PI)); //50% - 100%
-        moveRobot(0, angularVelocity);
+            angularVelocity = maxAngularVelocity; //turning left is closer
+        else
+            angularVelocity = -maxAngularVelocity; //turing right is closer
+         moveRobot(0, angularVelocity);
     }
-
 
     private void moveRobot(double velocity, double angularVelocity)
     {
@@ -174,6 +267,22 @@ class RobotMovement extends Observable {
         notifyObservers();
         setChanged();
     }
+
+    private static double applyLimits(double value, double min, double max)
+    {
+        if (value < min)
+            return min;
+        if (value > max)
+            return max;
+        return value;
+    }
+
+    private double angleFromRobot() {
+        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        return asNormalizedRadians(angleToTarget - m_robotDirection); //angle from robots perspective
+    }
+
+    private boolean lookingAtTarget()  { return rounded(angleFromRobot(), 1) == 0; }
 
     private static double asNormalizedRadians(double angle)
     {

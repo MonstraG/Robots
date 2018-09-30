@@ -15,9 +15,8 @@ import log.Logger;
 class MainApplicationFrame extends JFrame
 {
 
-    //TODO: creating new random points when reached mode;
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private HashMap<Component, Component> windowRegistry = new HashMap<>();
+    private HashMap<Component, ArrayList<Component>> windowRegistry = new HashMap<>();
 
     static final int globalTimeConst = 25;
 
@@ -47,7 +46,7 @@ class MainApplicationFrame extends JFrame
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(" ");
-                int converted[] = new int[9];
+                int converted[] = new int[parts.length];
 
                 switch (parts[0]) {
                     case "log":
@@ -56,11 +55,14 @@ class MainApplicationFrame extends JFrame
                         addWindow(createLogWindow(converted[1],converted[2],converted[3],converted[4]));
                         break;
                     case "game":
-                        for (int i = 1; i < 9; i++) // game(x,y,w,n) pos(x, y, w, h)
+                        for (int i = 1; i < parts.length - 1; i++) // game(x,y,w,n) pos(x, y, w, h)
                             converted[i] = Integer.parseInt(parts[i]);
                         GameWindow gameWindow = createGameWindow(converted[1],converted[2],converted[3],converted[4]);
                         addWindow(gameWindow);
-                        addWindow(createPosWindow(gameWindow, converted[5], converted[6], converted[7], converted[8]));
+                        for(int i = 5; i < parts.length - 1; i += 4)
+                            gameWindow.addNewRobot();
+                        addWindow(createPosWindow(gameWindow.getRobots().get(gameWindow.getRobots().size()-1),
+                                converted[5], converted[6], converted[7], converted[8]));
                         break;
                     default:
                         break;
@@ -96,11 +98,13 @@ class MainApplicationFrame extends JFrame
                       .append(String.valueOf(component.getWidth())).append(" ")
                       .append(String.valueOf(component.getHeight())).append(" ");
                     if (component.getName().equals("game") ) { // if game get paired pos window
-                        Component window = windowRegistry.get(component);
-                        br.append(String.valueOf(window.getX())).append(" ")
-                                .append(String.valueOf(window.getY())).append(" ")
-                                .append(String.valueOf(window.getWidth())).append(" ")
-                                .append(String.valueOf(window.getHeight())).append(" ");
+                        ArrayList<Component> windows = windowRegistry.get(component); //from hashmap
+                        for(Component window : windows) {
+                            br.append(String.valueOf(window.getX())).append(" ")
+                                    .append(String.valueOf(window.getY())).append(" ")
+                                    .append(String.valueOf(window.getWidth())).append(" ")
+                                    .append(String.valueOf(window.getHeight())).append(" ");
+                        }
                         //result should be
                         //game x y w h x y w h
                     }
@@ -135,9 +139,14 @@ class MainApplicationFrame extends JFrame
         gameWindow.setName("game");
         gameWindow.setLocation(x, y);
         gameWindow.setSize(width, height);
-        PosWindow posWindow = createPosWindow(gameWindow);
-        addWindow(posWindow); //create paired PosWindow
-        windowRegistry.put(gameWindow, posWindow);
+        ArrayList<Component> array = new ArrayList<>();
+
+        for(RobotMovement robot : gameWindow.getRobots()) {
+            PosWindow posWindow = createPosWindow(robot);
+            addWindow(posWindow); //create paired PosWindow
+            array.add(posWindow);
+        }
+        windowRegistry.put(gameWindow, array);
         return gameWindow;
     }
 
@@ -145,16 +154,16 @@ class MainApplicationFrame extends JFrame
         return createGameWindow(0, 0, 400, 400);
     }
 
-    private PosWindow createPosWindow(GameWindow gw, int x, int y, int width, int height) {
-        PosWindow posWindow = new PosWindow(gw.getRobotMovement());
+    private PosWindow createPosWindow(RobotMovement rm, int x, int y, int width, int height) {
+        PosWindow posWindow = new PosWindow(rm);
         posWindow.setName("pos");
         posWindow.setLocation(x, y);
         posWindow.setSize(width, height);
         return posWindow;
     }
 
-    private PosWindow createPosWindow(GameWindow gw) { //default params
-        return createPosWindow(gw, 0, 0, 200, 100);
+    private PosWindow createPosWindow(RobotMovement rm) { //default params
+        return createPosWindow(rm, 0, 0, 200, 100);
     }
 
     private void createDefaultPair() {
@@ -219,4 +228,5 @@ class MainApplicationFrame extends JFrame
                 | IllegalAccessException | UnsupportedLookAndFeelException e)
         { /* Just ignore */ }
     }
+
 }
